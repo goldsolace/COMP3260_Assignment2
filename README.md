@@ -15,5 +15,6 @@ Where mode specifies encryption or decryption. Replace "mode" with "e" for encry
 Replace "filePath" with the path of the file you wish to use.
 
 ***Examples***
+
 "java Application e Example.txt"
 "java Application d C:/Users/Name/Documents/Example.dat"
