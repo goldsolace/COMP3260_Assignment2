@@ -48,7 +48,7 @@ public class Application {
 		try {
 			if (args.length > 0) {
 				isEncryption = !args[0].equalsIgnoreCase("d");
-				file = new File(args[0]);	
+				file = new File(args[1]);
 			} else {
 				Object[] options = { "Encryption", "Decryption" };
 				isEncryption = JOptionPane.showOptionDialog(null, "Operation?", "Please choose an opteration",
@@ -131,52 +131,6 @@ public class Application {
 	}
 
 	/**
-	 * Read in a text file with expected format Plaintext/Ciphertext on the first line and Key on the second line.
-	 *
-	 * @return Key, plaintext, ciphertext triplet
-	 */
-	private CryptoTriplet<String, String, String> readFile() {
-		BufferedReader reader = null;
-		try {
-			String text = "";
-			String key = "";
-			
-			reader = new BufferedReader(new FileReader(file));
-			String line;
-			int counter = 0;
-
-			// Read through file line by line until no more lines
-			while ((line = reader.readLine()) != null) {
-				if (line.isEmpty()) continue;
-				switch (counter++) {
-					case 0:
-						text = line;
-						break;
-					case 1:
-						key = line;
-						break;
-					default:
-						break;
-				}
-			}
-
-			if (isEncryption)
-				return new CryptoTriplet(key, text, "");
-			return new CryptoTriplet(key, "", text);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				reader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Swaps a specified bit in string of 1s and 0s
 	 */
 	private String swapOneBit(String s, int bit) {
@@ -229,6 +183,53 @@ public class Application {
 		output.append("Ciphertext C: ").append(result.getCiphertext()).append(System.lineSeparator());
 		output.append("Key K: ").append(result.getKey()).append(System.lineSeparator());
 		output.append("Plaintext P: ").append(result.getPlaintext()).append(System.lineSeparator());
+	}
+
+
+	/**
+	 * Read in a text file with expected format Plaintext/Ciphertext on the first line and Key on the second line.
+	 *
+	 * @return Key, plaintext, ciphertext triplet
+	 */
+	private CryptoTriplet<String, String, String> readFile() {
+		BufferedReader reader = null;
+		try {
+			String text = "";
+			String key = "";
+
+			reader = new BufferedReader(new FileReader(file));
+			String line;
+			int counter = 0;
+
+			// Read through file line by line until no more lines
+			while ((line = reader.readLine()) != null) {
+				if (line.isEmpty()) continue;
+				switch (counter++) {
+					case 0:
+						text = line;
+						break;
+					case 1:
+						key = line;
+						break;
+					default:
+						break;
+				}
+			}
+
+			if (isEncryption)
+				return new CryptoTriplet(key, text, "");
+			return new CryptoTriplet(key, "", text);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 
 	/**
