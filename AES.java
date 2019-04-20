@@ -10,26 +10,28 @@ import java.io.IOException;
  * @author Jeremiah Smith - c3238179
  * @since 17-04-2019
  */
+
+// DUE: 4/05/2019
 public class AES {
 	
 	public AES() {
 	}
 
-	public void encrypt(CryptoTriplet<String, String, String> cyptoTriplet, int version) {
+	public void encrypt(CryptoTriplet<String, String, String> cyptoTriplet, int version) { // Jeremiah
 	}
 
-	public void decrypt(CryptoTriplet<String, String, String> cyptoTriplet) {
+	public void decrypt(CryptoTriplet<String, String, String> cyptoTriplet) { // Jeremiah
 	}
 
-	private void substituteBtes() {
+	private void substituteBtes() { // Jeremiah
 	}
 
-	private void shiftRows() {
+	private void shiftRows() { // Brice
 	}
 
-	private void mixColumns() {
+	private void mixColumns() { // Jeremiah
 	}
 
-	private void addRoundKey() {
+	private void addRoundKey() { // Brice
 	}
 }

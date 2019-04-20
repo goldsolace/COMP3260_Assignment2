@@ -1,8 +1,4 @@
-ENCRYPTION
-Plaintext P: import java.io.BufferedReader;
+DECRYPTION
+Ciphertext C: import java.io.BufferedReader;
 Key K: import java.io.FileReader;
-Ciphertext C: 
-Running time: 1ms
-Avalanche: 
-P and Pi under K
-P under K and Ki
+Plaintext P: 
