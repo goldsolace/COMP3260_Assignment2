@@ -10,12 +10,12 @@ import java.util.Scanner;
  * 
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 17-04-2019
+ * @since 11-05-2019
  */
 
 // TODO: Read this v
 // all core AES methods are working as tested on byte/hex values
-// the readBinary method can be used to read a binary string in
+// the readBinary method was designed to be used to read a binary string in
 // the format of the relevant bytewise values
 // NOTE: testing so far has been done on an external file as I have not yet
 // got myself familiar with using Application.java
