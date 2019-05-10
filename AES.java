@@ -13,7 +13,21 @@ import java.util.Scanner;
  * @since 17-04-2019
  */
 
-
+// TODO: Read this v
+// all core AES methods are working as tested on byte/hex values
+// the readBinary method can be used to read a binary string in
+// the format of the relevant bytewise values
+// NOTE: testing so far has been done on an external file as I have not yet
+// got myself familiar with using Application.java
+//
+// If you encounter any problems testing with the "byte" values then change them
+// all to integer values as that was what used when successfully testing each
+// method
+// TODO: test from Application
+// TODO: verify results after a full encryption
+// TODO: inverse methods and decryption (methods designed to handle inverse
+// operations when passed the inverse boolean as true)
+ 
 
 // DUE: 4/05/2019
 public class AES {
@@ -22,46 +36,60 @@ public class AES {
 	public AES() {
 	}
 
-static int[][] transpose(int[][] input) {
-     // TODO: Validation. Detect empty and non-rectangular arrays.
-     int[][] ret = new int[input[0].length][];
-     for (int i = 0; i < ret.length; i++) {
-        ret[i] = new int[input.length];
-     }
-     for (int i = 0; i < input.length; i++) {
-         for (int j = 0; i < ret.length; j++) {
-             ret[j][i] = input[i][j];
-         }
-     }
-     return ret;
- }
-
-int[] a2dto1d(int[][] arr)
-{
-	int m = arr.length;
-	int n = arr[0].length;
-	int[] newArr = new int[m*n+n];//?
-	for(int i=0; i<arr.length; i++)
+	public byte[] readBinary(String plaintext)
 	{
-		for(int j=0;j<arr[0].length;j++)
+		int Bit = 0;
+		byte[] state = new byte[16];
+		for (int j = 0; j < 16; j++)
 		{
-			int position = i*n + j;
-			newArr[position] = arr[i][j];
+			state[j] = 0;
+			for (int i = 0; i < 8; i++)
+			{
+				System.out.print("char "+plaintext.charAt(j*8+i));
+				if (i % 8 == 0)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 7);
+				if (i % 8 == 1)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 6);
+				if (i % 8 == 2)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 5);
+				if (i % 8 == 3)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 4);
+				if (i % 8 == 4)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 3);
+				if (i % 8 == 5)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 2);
+				if (i % 8 == 6)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 1);
+				if (i % 8 == 7)
+					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 0);
+				System.out.println(" value " + Bit);
+				state[j] += Bit;
+			}
 		}
+		return state;
 	}
-	return newArr;
-}
 
 	// Input: 128 bit plaintext block and 128 bit key
 	// Output: 128 bit cipertext block
 	public void encrypt(CryptoTriplet<String, String, String> cryptoTriplet, int version) // Jeremiah
 	{
+		// preprocessing
+		// Initialize the state array with the block data (plaintext).
+		byte state[] = new byte[16];
+
+		String plaintext = cryptoTriplet.getPlaintext();
+		if (plaintext.length() == 128)//convert to hex
+			state = readBinary(plaintext);
+		else
+			state = cryptoTriplet.getPlaintext().getBytes();
+
+
 		// 1. Key Expansion:
 		// Derive the set of round keys from the cipher key.
 		// byte[] roundKey = new byte[16];
-		//
-		//
-		 String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
+		
+		// used this for testing expandKey
+		String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
 		// String key = cryptoTriplet.getKey();
 
 		// read in 16 byte key, cast to int
@@ -71,12 +99,9 @@ int[] a2dto1d(int[][] arr)
 			keyArr[i] = Integer.parseInt(sc.next(), 16);
 
 		// create round key...
-		 int[] roundKey = a2dto1d(expandKey(keyArr));
+		int[] roundKey = convertArray(expandKey(keyArr));
 
 		// 2. Initial Round:
-		// Initialize the state array with the block data (plaintext).
-		byte state[] = cryptoTriplet.getPlaintext().getBytes();
-
 		// Add the initial round key to the starting state array.
 		addRoundKey(state, roundKey);
 
@@ -93,7 +118,7 @@ int[] a2dto1d(int[][] arr)
 			if (version != 4)
 				addRoundKey(state, roundKey);
 		}
-		
+
 		// 4. Final Round
 		//ROUND 10 - Perform the tenth and final round of state manipulation.
 		if (version != 1)
@@ -104,7 +129,7 @@ int[] a2dto1d(int[][] arr)
 			addRoundKey(state, roundKey);
 
 		// Copy the final state array out as the encrypted data (ciphertext).
-		
+
 		// return encrypted data (ciphertext)
 	}
 
@@ -158,19 +183,19 @@ int[] a2dto1d(int[][] arr)
 		// substituteBytes operation
 		if (inverse)
 			sbox = data.getInvertedSbox();
-	//  each byte of state is replaced by byte in row (left
-	// 4-bits) & column (right 4-bits)
-	//  eg. byte {95} is replaced by row 9 col 5 byte
-	//  which is the value {2A}
-	//  S-box is constructed using a defined
-	// transformation of the values in GF(2^8)
-	//  designed to be resistant to all known attacks
-	for (int i = 0; i < 16; i++)
-		state[i] = (byte)sbox[state[i]];
+		//  each byte of state is replaced by byte in row (left
+		// 4-bits) & column (right 4-bits)
+		//  eg. byte {95} is replaced by row 9 col 5 byte
+		//  which is the value {2A}
+		//  S-box is constructed using a defined
+		// transformation of the values in GF(2^8)
+		//  designed to be resistant to all known attacks
+		for (int i = 0; i < 16; i++)
+			state[i] = (byte)sbox[state[i]];
 
-	// reutrn the modifid state contents
-	return state;
-	
+		// reutrn the modifid state contents
+		return state;
+
 	}
 
 	private byte[] shiftRows(byte[] state, boolean inverse) { // Brice
@@ -205,60 +230,60 @@ int[] a2dto1d(int[][] arr)
 	}
 
 
-private byte[] mixColumns(byte[] state, boolean inverse) // Jeremiah
-{
+	private byte[] mixColumns(byte[] state, boolean inverse) // Jeremiah
+	{
 
-	//  each column is processed separately
-	//
-	//  each byte is replaced by a value dependent
-	// on all 4 bytes in the column
-	//  effectively a matrix multiplication in
-	// GF(28) using irreducible polynomial
-	// m(x) =x^8+x^4+x^3+x+1
+		//  each column is processed separately
+		//
+		//  each byte is replaced by a value dependent
+		// on all 4 bytes in the column
+		//  effectively a matrix multiplication in
+		// GF(28) using irreducible polynomial
+		// m(x) =x^8+x^4+x^3+x+1
 
-	// (see graph)
+		// (see graph)
 
-	//  can express each col as 4 equations
-	// 	 to derive each new byte in col
-	//  decryption requires use of inverse matrix
-	// 	 with larger coefficients, hence a little harder
-	//  have an alternate characterisation
-	// 	 each column a 4-term polynomial
-	// 	 with coefficients in GF(2^8)
-	// 	 and polynomials multiplied modulo (x^4+1)
-	//
+		//  can express each col as 4 equations
+		// 	 to derive each new byte in col
+		//  decryption requires use of inverse matrix
+		// 	 with larger coefficients, hence a little harder
+		//  have an alternate characterisation
+		// 	 each column a 4-term polynomial
+		// 	 with coefficients in GF(2^8)
+		// 	 and polynomials multiplied modulo (x^4+1)
+		//
 
-	Data data = new Data();
-	int[] mul2 = data.getMul2();
-	int[] mul3 = data.getMul3();
-	int[] mul9 = data.getMul9();
-	int[] mul13 = data.getMul13();
-	int[] mul14 = data.getMul14();
+		Data data = new Data();
+		int[] mul2 = data.getMul2();
+		int[] mul3 = data.getMul3();
+		int[] mul9 = data.getMul9();
+		int[] mul13 = data.getMul13();
+		int[] mul14 = data.getMul14();
 
-	int[] temp = new int[16];
+		int[] temp = new int[16];
 
-	temp[0] = (mul2[state[0]]^mul3[state[1]]^state[2]^state[3]);
-	temp[1] = (state[0]^mul2[state[1]]^mul3[state[2]]^state[3]);
-	temp[2] = (state[0]^state[1]^mul2[state[2]]^mul3[state[3]]);
-	temp[3] = (mul3[state[0]]^state[1]^state[2]^mul2[state[3]]);
-	temp[4] = (mul2[state[4]]^mul3[state[5]]^state[6]^state[7]);
-	temp[5] = (state[4]^mul2[state[5]]^mul3[state[6]]^state[7]);
-	temp[6] = (state[4]^state[5]^mul2[state[6]]^mul3[state[7]]);
-	temp[7] = (mul3[state[4]]^state[5]^state[6]^mul2[state[7]]);
-	temp[8] = (mul2[state[8]]^mul3[state[9]]^state[10]^state[11]);
-	temp[9] = (state[8]^mul2[state[9]]^mul3[state[10]]^state[11]);
-	temp[10] = (state[8]^state[9]^mul2[state[10]]^mul3[state[11]]);
-	temp[11] = (mul3[state[8]]^state[9]^state[10]^mul2[state[11]]);
-	temp[12] = (mul2[state[12]]^mul3[state[13]]^state[14]^state[15]);
-	temp[13] = (state[12]^mul2[state[13]]^mul3[state[14]]^state[15]);
-	temp[14] = (state[12]^state[13]^mul2[state[14]]^mul3[state[15]]);
-	temp[15] = (mul3[state[12]]^state[13]^state[14]^mul2[state[15]]);
+		temp[0] = (mul2[state[0]]^mul3[state[1]]^state[2]^state[3]);
+		temp[1] = (state[0]^mul2[state[1]]^mul3[state[2]]^state[3]);
+		temp[2] = (state[0]^state[1]^mul2[state[2]]^mul3[state[3]]);
+		temp[3] = (mul3[state[0]]^state[1]^state[2]^mul2[state[3]]);
+		temp[4] = (mul2[state[4]]^mul3[state[5]]^state[6]^state[7]);
+		temp[5] = (state[4]^mul2[state[5]]^mul3[state[6]]^state[7]);
+		temp[6] = (state[4]^state[5]^mul2[state[6]]^mul3[state[7]]);
+		temp[7] = (mul3[state[4]]^state[5]^state[6]^mul2[state[7]]);
+		temp[8] = (mul2[state[8]]^mul3[state[9]]^state[10]^state[11]);
+		temp[9] = (state[8]^mul2[state[9]]^mul3[state[10]]^state[11]);
+		temp[10] = (state[8]^state[9]^mul2[state[10]]^mul3[state[11]]);
+		temp[11] = (mul3[state[8]]^state[9]^state[10]^mul2[state[11]]);
+		temp[12] = (mul2[state[12]]^mul3[state[13]]^state[14]^state[15]);
+		temp[13] = (state[12]^mul2[state[13]]^mul3[state[14]]^state[15]);
+		temp[14] = (state[12]^state[13]^mul2[state[14]]^mul3[state[15]]);
+		temp[15] = (mul3[state[12]]^state[13]^state[14]^mul2[state[15]]);
 
-	for (int i = 0; i < 16; i++)
-		state[i] = (byte)temp[i];
+		for (int i = 0; i < 16; i++)
+			state[i] = (byte)temp[i];
 
-	return state;
-}
+		return state;
+	}
 
 	// XOR each byte of round key and state table
 	private void addRoundKey(byte[] state, int roundKey[]) { // Brice
@@ -335,10 +360,10 @@ private byte[] mixColumns(byte[] state, boolean inverse) // Jeremiah
 	// for debugging
 	static void printB(int word[])
 	{
-			System.out.print(Integer.toHexString(word[0]));
-			System.out.print(Integer.toHexString(word[1]));
-			System.out.print(Integer.toHexString(word[2]));
-			System.out.print(Integer.toHexString(word[3]) + "	");
+		System.out.print(Integer.toHexString(word[0]));
+		System.out.print(Integer.toHexString(word[1]));
+		System.out.print(Integer.toHexString(word[2]));
+		System.out.print(Integer.toHexString(word[3]) + "	");
 	}
 
 
@@ -364,4 +389,21 @@ private byte[] mixColumns(byte[] state, boolean inverse) // Jeremiah
 		int[] temp = {word[1], word[2], word[3], word[0]};
 		return temp;
 	}
+
+	public int[] convertArray(int[][] arr)
+	{
+		int m = arr.length;
+		int n = arr[0].length;
+		int[] newArr = new int[m*n+n];//?
+		for(int i=0; i<arr.length; i++)
+		{
+			for(int j=0;j<arr[0].length;j++)
+			{
+				int position = i*n + j;
+				newArr[position] = arr[i][j];
+			}
+		}
+		return newArr;
+	}
+
 }
