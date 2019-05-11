@@ -12,14 +12,14 @@ public class CryptoTriplet
     private byte[] key;
     private byte[] plaintext;
     private byte[] ciphertext;
-    private final byte[][][] intermediateResults;
+    private final byte[][][] intermediateStates;
 
     public CryptoTriplet(byte[] key, byte[] plaintext, byte[] ciphertext)
     {
         this.key = key;
         this.plaintext = plaintext;
         this.ciphertext = ciphertext;
-        intermediateResults = new byte[Application.NUM_VERSIONS][Application.NUM_ROUNDS][];
+        intermediateStates = new byte[Application.NUM_VERSIONS][Application.NUM_ROUNDS][];
     }
 
     public byte[] getKey()
@@ -37,9 +37,26 @@ public class CryptoTriplet
         return ciphertext;
     }
 
-    public byte[][][] getIntermediateResults()
+    public byte[] getCiphertext(int version)
     {
-        return intermediateResults;
+        if (intermediateStates[version] != null)
+            return intermediateStates[version][Application.NUM_ROUNDS-1];
+        return ciphertext;
+    }
+
+    public byte[][][] getIntermediateStates()
+    {
+        return intermediateStates;
+    }
+
+    public byte[] getIntermediateState(int version, int round)
+    {
+        return intermediateStates[version][round];
+    }
+
+    public void setIntermediateState(byte[] state, int version, int round)
+    {
+        intermediateStates[version][round] = state;
     }
 
     public void setKey(byte[] key)
@@ -52,8 +69,9 @@ public class CryptoTriplet
         this.plaintext = plaintext;
     }
 
-    public void setCiphertext(byte[] ciphertext)
+    public void setCiphertext(byte[] ciphertext, int version)
     {
-        this.ciphertext = ciphertext;
+        if (version == 0)
+            this.ciphertext = ciphertext;
     }
 }

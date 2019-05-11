@@ -8,7 +8,7 @@ import java.util.List;
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 11-05-2019
+ * @since 12-05-2019
  */
 
 public class Application
@@ -20,6 +20,8 @@ public class Application
     private boolean isEncryption;
     private File file;
     private StringBuilder output;
+
+    public static List<byte[]> list = new ArrayList<>();
 
     /**
      * Constructs an Application object from params.
@@ -110,19 +112,17 @@ public class Application
                 // Explore the changing of the ith bit
                 byte[] ithKey = Utility.flipBit(cyptoTriplet.getKey(), i);
                 byte[] ithPlaintext = Utility.flipBit(cyptoTriplet.getPlaintext(), i);
-                //System.out.println(Utility.byteArrToBinaryString(ithKey));
-                //System.out.println(Utility.byteArrToBinaryString(ithPlaintext));
 
                 List<CryptoTriplet> cyptoTriplets = new ArrayList<>();
                 // a) P and Pi under K
-                cyptoTriplets.add(new CryptoTriplet(cyptoTriplet.getKey(), ithPlaintext, new byte[ithPlaintext.length]));
+                cyptoTriplets.add(new CryptoTriplet(cyptoTriplet.getKey(), ithPlaintext, null));
                 // b) P under K and Ki
-                cyptoTriplets.add(new CryptoTriplet(ithKey, cyptoTriplet.getPlaintext(), new byte[cyptoTriplet.getPlaintext().length]));
+                cyptoTriplets.add(new CryptoTriplet(ithKey, cyptoTriplet.getPlaintext(), null));
 
                 // Explore each version of AES (AES0-AES4) on each of the current cryptoTriplets
                 for (CryptoTriplet triplet : cyptoTriplets)
                 {
-                    for (int aesVersion = 0; aesVersion < 5; aesVersion++)
+                    for (int aesVersion = 0; aesVersion < NUM_VERSIONS; aesVersion++)
                     {
                         aes.encrypt(triplet, aesVersion);
                     }
@@ -151,37 +151,40 @@ public class Application
      */
     private int[][][] AvalancheAnalysis(CryptoTriplet original, List<List<CryptoTriplet>> results)
     {
-        // TODO Analysis
         int[][] pAndPiUnderKAverages = new int[Application.NUM_ROUNDS + 1][Application.NUM_VERSIONS];
         int[][] pUnderKAndKiAverages = new int[Application.NUM_ROUNDS + 1][Application.NUM_VERSIONS];
+        for (byte[] b : list) {
+            System.out.println(Utility.byteArrToBinaryString(b) + " : " + Utility.bitDifference(original.getPlaintext(), b));
+        }
 
         for (List<CryptoTriplet> list : results)
         {
             CryptoTriplet PiUnderK = list.get(0);
             CryptoTriplet PUnderKi = list.get(1);
-            for (int i = 0; i < NUM_VERSIONS; i++)
+            // Round 0 (Before any Encryption
+            for (int version = 0; version < NUM_VERSIONS; version++)
             {
-
-                pAndPiUnderKAverages[0][i] = Utility.bitDifference(original.getPlaintext(), PiUnderK.getPlaintext());
-                pUnderKAndKiAverages[0][i] = Utility.bitDifference(original.getPlaintext(), PUnderKi.getPlaintext());
+                pAndPiUnderKAverages[0][version] = Utility.bitDifference(original.getPlaintext(), PiUnderK.getPlaintext());
+                pUnderKAndKiAverages[0][version] = Utility.bitDifference(original.getPlaintext(), PUnderKi.getPlaintext());
             }
-            for (int i = 0; i < NUM_ROUNDS; i++)
+            // Sum bitDifference of version/round intermediate state
+            for (int round = 0; round < NUM_ROUNDS; round++)
             {
-                //System.out.println(Utility.byteArrToBinaryString(PiUnderK.getIntermediateResults()[0][i]));
-                for (int j = 0; j < NUM_VERSIONS; j++)
+                for (int version = 0; version < NUM_VERSIONS; version++)
                 {
-                    pAndPiUnderKAverages[i + 1][j] += Utility.bitDifference(original.getPlaintext(), PiUnderK.getIntermediateResults()[j][i]);
-                    pUnderKAndKiAverages[i + 1][j] += Utility.bitDifference(original.getPlaintext(), PUnderKi.getIntermediateResults()[j][i]);
+                    pAndPiUnderKAverages[round + 1][version] += Utility.bitDifference(original.getPlaintext(), PiUnderK.getIntermediateState(version, round));
+                    pUnderKAndKiAverages[round + 1][version] += Utility.bitDifference(original.getPlaintext(), PUnderKi.getIntermediateState(version, round));
                 }
             }
         }
 
-        for (int i = 1; i < NUM_ROUNDS + 1; i++)
+        // Average
+        for (int round = 1; round < NUM_ROUNDS + 1; round++)
         {
-            for (int j = 0; j < NUM_VERSIONS; j++)
+            for (int version = 0; version < NUM_VERSIONS; version++)
             {
-                pAndPiUnderKAverages[i][j] = Math.round((float) pAndPiUnderKAverages[i][j] / (KEY_SIZE-1));
-                pUnderKAndKiAverages[i][j] = Math.round((float) pUnderKAndKiAverages[i][j] / (KEY_SIZE-1));
+                pAndPiUnderKAverages[round][version] = pAndPiUnderKAverages[round][version] / KEY_SIZE;
+                pUnderKAndKiAverages[round][version] = pUnderKAndKiAverages[round][version] / KEY_SIZE;
             }
         }
 
@@ -189,21 +192,6 @@ public class Application
         analysis[0] = pAndPiUnderKAverages;
         analysis[1] = pUnderKAndKiAverages;
         return analysis;
-    }
-
-    private void printCryptoTriplet(CryptoTriplet c)
-    {
-        StringBuilder output = new StringBuilder();
-        output.append("P: ")
-                .append(Utility.byteArrToBinaryString(c.getPlaintext()))
-                .append(System.lineSeparator());
-        output.append("K: ")
-                .append(Utility.byteArrToBinaryString(c.getKey()))
-                .append(System.lineSeparator());
-        output.append("C: ")
-                .append(Utility.byteArrToBinaryString(c.getCiphertext()))
-                .append(System.lineSeparator());
-        System.out.println(output.toString());
     }
 
     /**
@@ -230,12 +218,10 @@ public class Application
                 .append(System.lineSeparator());
         output.append("P and Pi under K")
                 .append(System.lineSeparator());
-        // TODO Rounds/Versions for analysis[0]
         GenerateAnalysisOutput(analysis[0]);
         output.append(System.lineSeparator());
         output.append("P under K and Ki")
                 .append(System.lineSeparator());
-        // TODO Rounds/Versions for analysis[1]
         GenerateAnalysisOutput(analysis[1]);
     }
 

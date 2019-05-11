@@ -102,6 +102,17 @@ public class Utility
     }
 
     /**
+     * Convert an int array to a binary string.
+     *
+     * @param intArr
+     * @return binary string representation of int array
+     */
+    public static String intArrToBinaryString(int[] intArr)
+    {
+        return byteArrToBinaryString(intArrToByteArr(intArr));
+    }
+
+    /**
      * Flips the ith bit in 128 bit byte array.
      *
      * @param byteArr 16 bytes long
@@ -133,5 +144,34 @@ public class Utility
             diff += Integer.bitCount(byte1 ^ byte2);
         }
         return diff;
+    }
+
+    /**
+     * Print a byte.
+     * Print contents of a word in hexadecimal 2 bits at a time
+     *
+     * @param word
+     */
+    static void printByte(int[] word)
+    {
+        System.out.print(Integer.toHexString(word[0]));
+        System.out.print(Integer.toHexString(word[1]));
+        System.out.print(Integer.toHexString(word[2]));
+        System.out.print(Integer.toHexString(word[3]) + "	");
+    }
+
+    /**
+     * Print hexadecimal representation of state.
+     *
+     * @param state
+     * @return Hexadecimal String representation of state
+     */
+    static void printHex(int[] state)
+    {
+        for (int j = 0; j < state.length; j++)
+        {
+            System.out.print(Integer.toHexString(state[j]));
+        }
+        System.out.println();
     }
 }

@@ -27,10 +27,6 @@ public class AES
         // Initialize the state array with the block data (plaintext).
         int[] state = Utility.byteArrToIntArr(cryptoTriplet.getPlaintext());
 
-//		int state[] = new int[16];
-//		state = readBinary("");
-//		getBinary(state);
-
         // 1. Key Expansion:
         // Derive the set of round keys from the cipher key.
         int[] intKey = Utility.byteArrToIntArr(cryptoTriplet.getKey());
@@ -42,37 +38,38 @@ public class AES
 
         // 3. Rounds:
         //ROUND 1-9: Perform nine rounds of state manipulation.
-        for (int i = 0; i < 9; i++)
+        for (int round = 0; round < 9; round++)
         {
             if (version != 1)
-                substituteBytes(state, false);
+                state = substituteBytes(state, false);
 
             if (version != 2)
-                shiftRows(state, false);
+                state = shiftRows(state, false);
 
             if (version != 3)
-                mixColumns(state, false);
+                state = mixColumns(state, false);
 
             if (version != 4)
-                addRoundKey(state, roundKey, i + 1);
-            cryptoTriplet.getIntermediateResults()[version][i] = Utility.intArrToByteArr(state);
+                addRoundKey(state, roundKey, round + 1);
+
+            // Store intermediate state for current version and round
+            cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round);
         }
 
         // 4. Final Round
         //ROUND 10 - Perform the tenth and final round of state manipulation.
         if (version != 1)
-            substituteBytes(state, false);
+            state = substituteBytes(state, false);
         if (version != 2)
-            shiftRows(state, false);
+            state = shiftRows(state, false);
         if (version != 4)
             addRoundKey(state, roundKey, 10);
 
-        // Copy the final state array out as the encrypted data (ciphertext).
-
-        // return encrypted data (ciphertext)
         byte[] cipherText = Utility.intArrToByteArr(state);
-        cryptoTriplet.getIntermediateResults()[version][9] = Utility.intArrToByteArr(state);
-        cryptoTriplet.setCiphertext(cipherText);
+        // Store intermediate state for current version and round
+        cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, 9);
+        // Store cipher text in CryptoTriplet
+        cryptoTriplet.setCiphertext(cipherText, version);
     }
 
     /**
@@ -164,7 +161,7 @@ public class AES
      */
     private int[] shiftRows(int[] state, boolean inverse)
     {
-        int temp[] = new int[16];
+        int[] temp = new int[16];
 
         // copy shift values into temp array
         temp[0] = state[0];
@@ -187,11 +184,7 @@ public class AES
         temp[14] = state[6];
         temp[15] = state[11];
 
-        // copy temp array into state array
-        for (int i = 0; i < 16; i++)
-            state[i] = temp[i];
-
-        return state;
+        return temp;
     }
 
     /**
@@ -323,7 +316,9 @@ public class AES
                 // printByte(temp);
 
             } else if (Nk > 6 && i % Nk == 4)
+            {
                 temp = SubWord(temp);
+            }
 
             //  in 3 of 4 cases just XOR these together
             for (int j = 0; j < 4; j++)
@@ -367,89 +362,6 @@ public class AES
      */
     private int[] RotWord(int[] word)
     {
-        int[] temp = {word[1], word[2], word[3], word[0]};
-        return temp;
-    }
-
-    /**
-     * Print a byte.
-     * Print contents of a word in hexadecimal 2 bits at a time
-     *
-     * @param word
-     */
-    static void printByte(int[] word)
-    {
-        System.out.print(Integer.toHexString(word[0]));
-        System.out.print(Integer.toHexString(word[1]));
-        System.out.print(Integer.toHexString(word[2]));
-        System.out.print(Integer.toHexString(word[3]) + "	");
-    }
-
-    /**
-     * Get binary representation of a byte.
-     *
-     * @param byt
-     * @return binary String representation of byte
-     */
-    public String getBinary(int[] byt)
-    {
-        String bin = "";
-        for (int i = 0; i < byt.length; i++)
-            bin += String.format("%8s", Integer.toBinaryString(byt[i])).replace(' ', '0');
-        // System.out.println(bin);
-        return bin;
-    }
-
-    /**
-     * Print hexadecimal representation of state.
-     *
-     * @param state
-     * @return Hexadecimal String representation of state
-     */
-    static void printHex(int[] state)
-    {
-        for (int j = 0; j < state.length; j++)
-        {
-            System.out.print(Integer.toHexString(state[j]));
-        }
-        System.out.println();
-    }
-
-
-    /**
-     * Read binary String in byte sized values.
-     *
-     * @param plaintext
-     * @return state array
-     */
-    public int[] readBinary(String plaintext)
-    {
-        int Bit = 0;
-        int[] state = new int[16];
-        for (int j = 0; j < 16; j++)
-        {
-            state[j] = 0;
-            for (int i = 0; i < 8; i++)
-            {
-                if (i % 8 == 0)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 7);
-                if (i % 8 == 1)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 6);
-                if (i % 8 == 2)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 5);
-                if (i % 8 == 3)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 4);
-                if (i % 8 == 4)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 3);
-                if (i % 8 == 5)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 2);
-                if (i % 8 == 6)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 1);
-                if (i % 8 == 7)
-                    Bit = Character.getNumericValue(plaintext.charAt(j * 8 + i)) * (int) Math.pow(2, 0);
-                state[j] += Bit;
-            }
-        }
-        return state;
+        return new int[]{word[1], word[2], word[3], word[0]};
     }
 }
