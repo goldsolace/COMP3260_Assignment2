@@ -18,3 +18,8 @@ Replace "filePath" with the path of the file you wish to use.
 
 "java Application e Example.txt"
 "java Application d C:/Users/Name/Documents/Example.dat"
+
+## Sources
+* Federal Information Processing Standards Publication 197, Announcing the ADVANCED ENCRYPTION STANDARD (AES) 
+	- November 26, 2001,
+	- https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.197.pdf
