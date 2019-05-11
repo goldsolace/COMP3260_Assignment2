@@ -1,10 +1,3 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.Math;
-import java.util.Scanner;
-
 /**
  * Class Description
  * 
@@ -27,9 +20,7 @@ import java.util.Scanner;
 // TODO: verify results after a full encryption
 // TODO: inverse methods and decryption (methods designed to handle inverse
 // operations when passed the inverse boolean as true)
- 
 
-// DUE: 4/05/2019
 public class AES {
 	static Data data = new Data();
 
@@ -71,35 +62,28 @@ public class AES {
 
 	// Input: 128 bit plaintext block and 128 bit key
 	// Output: 128 bit cipertext block
-	public void encrypt(CryptoTriplet<String, String, String> cryptoTriplet, int version) // Jeremiah
+	public void encrypt(CryptoTriplet cryptoTriplet, int version) // Jeremiah
 	{
-		// preprocessing
+		// Pre-processing
+
 		// Initialize the state array with the block data (plaintext).
-		byte state[] = new byte[16];
-
-		String plaintext = cryptoTriplet.getPlaintext();
-		if (plaintext.length() == 128)//convert to hex
-			state = readBinary(plaintext);
-		else
-			state = cryptoTriplet.getPlaintext().getBytes();
-
+		byte state[] = cryptoTriplet.getPlaintext();
 
 		// 1. Key Expansion:
 		// Derive the set of round keys from the cipher key.
 		// byte[] roundKey = new byte[16];
 		
 		// used this for testing expandKey
-		String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
-		// String key = cryptoTriplet.getKey();
+		//String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
 
 		// read in 16 byte key, cast to int
-		Scanner sc = new Scanner(key);
-		int[] keyArr = new int[16];
-		for (int i = 0; i < 16; i++)
-			keyArr[i] = Integer.parseInt(sc.next(), 16);
+		byte[] byteKey = cryptoTriplet.getKey();
+		int[] intKey = new int[byteKey.length];
+		for (int i = 0; i < byteKey.length; i++)
+			intKey[i] = Byte.toUnsignedInt(byteKey[i]);
 
-		// create round key...
-		int[] roundKey = convertArray(expandKey(keyArr));
+		// Create round key...
+		int[] roundKey = convertArray(expandKey(intKey));
 
 		// 2. Initial Round:
 		// Add the initial round key to the starting state array.
@@ -135,12 +119,12 @@ public class AES {
 
 	// Input: 128 bit cipertext block and 128 bit key
 	// Output: 128 bit plaintext
-	public String decrypt(CryptoTriplet<String, String, String> cryptoTriplet, int version) // Jeremiah
+	public byte[] decrypt(CryptoTriplet cryptoTriplet, int version)
 	{
-		byte[] state = cryptoTriplet.getCiphertext().getBytes();
+		byte[] state = cryptoTriplet.getCiphertext();
 
 		// expand key
-		byte[] key = cryptoTriplet.getKey().getBytes();
+		byte[] key = cryptoTriplet.getKey();
 		int[] roundKey = new int[16];
 		// expandKey(key); // TODO
 		//ROUND 1
@@ -174,7 +158,7 @@ public class AES {
 	}
 
 	// a simple substitution of each byte
-	private byte[] substituteBytes(byte[] state, boolean inverse) // Jeremiah
+	private byte[] substituteBytes(byte[] state, boolean inverse)
 	{
 		char[] sbox = data.getSbox();
 		//  uses one table of 16x16 bytes containing a
@@ -198,7 +182,8 @@ public class AES {
 
 	}
 
-	private byte[] shiftRows(byte[] state, boolean inverse) { // Brice
+	private byte[] shiftRows(byte[] state, boolean inverse)
+	{
 		byte temp[] = new byte[16];
 
 		// copy shift values into temp array
@@ -223,9 +208,9 @@ public class AES {
 		temp[15] = state[11];
 
 		// copy temp array into state array
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 16; i++)
 			state[i] = temp[i];
-		}
+
 		return state;
 	}
 
@@ -286,7 +271,8 @@ public class AES {
 	}
 
 	// XOR each byte of round key and state table
-	private void addRoundKey(byte[] state, int roundKey[]) { // Brice
+	private void addRoundKey(byte[] state, int roundKey[])
+	{
 		for (int i = 0; i < state.length; i++)
 			state[i] ^= roundKey[i];
 	}
@@ -317,7 +303,6 @@ public class AES {
 		// previous & 4 places back
 		while (i < Nb * (Nr+1))
 		{
-
 			temp = exKey[i-1];
 			//  every 4th has S-box + rotate + XOR round constant on
 			// previous before XOR together
@@ -336,18 +321,13 @@ public class AES {
 
 				System.out.print("	After XOR with Rcon ");
 				printB(temp);
-
-
 			}
-
-
 			else if (Nk > 6 && i % Nk == 4)
 				temp = SubWord(temp);
 
 			//  in 3 of 4 cases just XOR these together
-			for (int j = 0; j < 4; j++) {
+			for (int j = 0; j < 4; j++)
 				exKey[i][j] = exKey[i-Nk][j] ^ temp[j];
-			}
 
 			printB(exKey[i]);
 			System.out.println();
