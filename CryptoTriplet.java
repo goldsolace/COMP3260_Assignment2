@@ -17,7 +17,7 @@ public class CryptoTriplet {
         this.key = key;
         this.plaintext = plaintext;
         this.ciphertext = ciphertext;
-        intermediateResults = new byte[Application.NUM_ROUNDS][Application.NUM_VERSIONS][];
+        intermediateResults = new byte[Application.NUM_VERSIONS][Application.NUM_ROUNDS][];
     }
 
     public byte[] getKey() {
