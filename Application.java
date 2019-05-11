@@ -47,7 +47,16 @@ public class Application {
 		// Get operation and file from command line args or gui file chooser
 		try {
 			if (args.length > 0) {
-				isEncryption = !args[0].equalsIgnoreCase("d");
+				if (args[0].equalsIgnoreCase("--encrypt"))
+					isEncryption = true;
+				else if (args[0].equalsIgnoreCase("--decrypt"))
+					isEncryption = false;
+				else
+				{
+					System.out.println("Please use first arguments '--encrypt' for encryption or '--decrypt' for decryption followed by the input file name.");
+					return;
+
+				}
 				file = new File(args[1]);
 			} else {
 				Object[] options = { "Encryption", "Decryption" };
