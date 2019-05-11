@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,9 +50,17 @@ public class Application
         {
             if (args.length > 0)
             {
-                isEncryption = !args[0].equalsIgnoreCase("d");
+                if (args[0].equalsIgnoreCase("--encrypt"))
+                    isEncryption = true;
+                else if (args[0].equalsIgnoreCase("--decrypt"))
+                    isEncryption = false;
+                else
+                {
+                    System.out.println("Please use first arguments '--encrypt' for encryption or '--decrypt' for decryption followed by the input file name.");
+                    return;
+
+                }
                 file = new File(args[1]);
-                file.exists();
             }
             else
             {
@@ -264,14 +271,14 @@ public class Application
     public String byteArrToBinaryString(byte[] byteArr)
     {
         StringBuilder sb = new StringBuilder();
-        for (byte b : byteArr) {
+        for (byte b : byteArr)
+        {
             int byteInt = Byte.toUnsignedInt(b);
             int binary = Integer.parseInt(Integer.toBinaryString(byteInt));
             if (byteInt <= 127)
                 sb.append(String.format("%08d", binary));
             else
                 sb.append(String.format("%-8d", binary).replace(" ", "0"));
-            //sb.append(Integer.toBinaryString(Byte.toUnsignedInt(b)));
         }
         return sb.toString();
     }
@@ -298,9 +305,11 @@ public class Application
      * @param arr2 second byte array
      * @return int > 0 number of different bits
      */
-    public static int bitDifference(byte[] arr1, byte[] arr2) {
+    public static int bitDifference(byte[] arr1, byte[] arr2)
+    {
         int diff = 0;
-        for (int i = 0; i < arr1.length; i++) {
+        for (int i = 0; i < arr1.length; i++)
+        {
             int byte1 = Byte.toUnsignedInt(arr1[i]);
             int byte2 = Byte.toUnsignedInt(arr2[i]);
             diff += Integer.bitCount(byte1 ^ byte2);
@@ -310,9 +319,6 @@ public class Application
 
     /**
      * Write a string into a a file based on the name of the given file.
-     *
-     * //	 * @param file file selected by the user
-     * //	 * @param out string to be written
      */
     private void writeFile()
     {

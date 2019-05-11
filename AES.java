@@ -1,3 +1,12 @@
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.lang.Math;
+import java.util.Scanner;
+
+
 /**
  * Class Description
  * 
@@ -26,40 +35,6 @@ public class AES {
 
 	public AES() {
 	}
-
-	public byte[] readBinary(String plaintext)
-	{
-		int Bit = 0;
-		byte[] state = new byte[16];
-		for (int j = 0; j < 16; j++)
-		{
-			state[j] = 0;
-			for (int i = 0; i < 8; i++)
-			{
-				System.out.print("char "+plaintext.charAt(j*8+i));
-				if (i % 8 == 0)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 7);
-				if (i % 8 == 1)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 6);
-				if (i % 8 == 2)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 5);
-				if (i % 8 == 3)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 4);
-				if (i % 8 == 4)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 3);
-				if (i % 8 == 5)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 2);
-				if (i % 8 == 6)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 1);
-				if (i % 8 == 7)
-					Bit = (int)Math.pow(Character.getNumericValue(plaintext.charAt(j*8+i))*2, 0);
-				System.out.println(" value " + Bit);
-				state[j] += Bit;
-			}
-		}
-		return state;
-	}
-
 	// Input: 128 bit plaintext block and 128 bit key
 	// Output: 128 bit cipertext block
 	public void encrypt(CryptoTriplet cryptoTriplet, int version) // Jeremiah
@@ -67,11 +42,15 @@ public class AES {
 		// Pre-processing
 
 		// Initialize the state array with the block data (plaintext).
-		byte state[] = cryptoTriplet.getPlaintext();
+		//byte state[] = cryptoTriplet.getPlaintext();
+
+		int state[] = new int[16];
+		state = readBinary("");
+		// getBinary(state);
 
 		// 1. Key Expansion:
 		// Derive the set of round keys from the cipher key.
-		// byte[] roundKey = new byte[16];
+		// int[] roundKey = new int[16];
 		
 		// used this for testing expandKey
 		//String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
@@ -84,49 +63,83 @@ public class AES {
 
 		// Create round key...
 		int[] roundKey = convertArray(expandKey(intKey));
+		int[][] rrkey = expandKey(intKey);
 
 		// 2. Initial Round:
 		// Add the initial round key to the starting state array.
-		addRoundKey(state, roundKey);
+		System.out.print("input: ");
+		printHex(state);
+		addRoundKey(state, roundKey, 0);
+		// System.out.print("k_sch: ");
+		// printHex(roundKey);
+		System.out.print("start: ");
+		printHex(state);
 
 		// 3. Rounds:
 		//ROUND 1-9: Perform nine rounds of state manipulation.
 		for (int i = 0; i < 9; i++)
+		// for (int i = 0; i < 2; i++)
 		{
-			if (version != 1)
+			// if (version != 1)
 				state = substituteBytes(state, false);
-			if (version != 2)
+		System.out.print("s_box: ");
+		printHex(state);
+
+			// if (version != 2)
 				state = shiftRows(state, false);
-			if (version != 3)
+				
+		System.out.print("s_rows: ");
+		printHex(state);
+			// if (version != 3)
 				state = mixColumns(state, false);
-			if (version != 4)
-				addRoundKey(state, roundKey);
+
+		System.out.print("m_col: ");
+		printHex(state);
+			// if (version != 4)
+				addRoundKey(state, roundKey, i+1);
+				System.out.println("add round key");
+
+		System.out.print("start: ");
+		printHex(state);
 		}
 
 		// 4. Final Round
 		//ROUND 10 - Perform the tenth and final round of state manipulation.
-		if (version != 1)
+		// if (version != 1)
 			state = substituteBytes(state, false);
-		if (version != 2)
+		// if (version != 2)
 			state = shiftRows(state, false);
-		if (version != 4)
-			addRoundKey(state, roundKey);
+		// if (version != 4)
+			addRoundKey(state, roundKey, 10);
 
 		// Copy the final state array out as the encrypted data (ciphertext).
+		String ciphertext = getBinary(state);
 
 		// return encrypted data (ciphertext)
+		//cryptoTriplet.setCiphertext(ciphertext);
+		System.out.print("Output: ");
+		printHex(state);
+		// after first run state = caa85332c6d94b35755fd8b2eb1483 (hex)
+
+		int segFault = state[666];
 	}
 
 	// Input: 128 bit cipertext block and 128 bit key
 	// Output: 128 bit plaintext
 	public byte[] decrypt(CryptoTriplet cryptoTriplet, int version)
 	{
-		byte[] state = cryptoTriplet.getCiphertext();
+		//byte[] state = cryptoTriplet.getCiphertext();
+		String ciphertext = "";
+		int[] state = readBinary(ciphertext);
+
+		//byte[] key = cryptoTriplet.getKey();
 
 		// expand key
-		byte[] key = cryptoTriplet.getKey();
+		String keystr = "";
+		int[] key = readBinary(keystr);
 		int[] roundKey = new int[16];
-		// expandKey(key); // TODO
+		expandKey(key); // TODO
+
 		//ROUND 1
 		if (version != 2)
 			// Inverse shift rows
@@ -136,7 +149,7 @@ public class AES {
 			state = substituteBytes(state, true);
 		if (version != 4)
 			// Add round key
-			addRoundKey(state, roundKey);
+			addRoundKey(state, roundKey, 10);
 		if (version != 3)
 			// Inverse mix columns
 			state = mixColumns(state, true);
@@ -151,14 +164,14 @@ public class AES {
 				state = substituteBytes(state, true);
 			if (version != 4)
 				// Add Round Key
-				addRoundKey(state, roundKey);
+				addRoundKey(state, roundKey, 10-i);
 		}
 
 		return cryptoTriplet.getPlaintext();
 	}
 
 	// a simple substitution of each byte
-	private byte[] substituteBytes(byte[] state, boolean inverse)
+	private int[] substituteBytes(int[] state, boolean inverse)
 	{
 		char[] sbox = data.getSbox();
 		//  uses one table of 16x16 bytes containing a
@@ -175,16 +188,15 @@ public class AES {
 		// transformation of the values in GF(2^8)
 		//  designed to be resistant to all known attacks
 		for (int i = 0; i < 16; i++)
-			state[i] = (byte)sbox[state[i]];
+			state[i] = (int)sbox[state[i]];
 
 		// reutrn the modifid state contents
 		return state;
 
 	}
 
-	private byte[] shiftRows(byte[] state, boolean inverse)
-	{
-		byte temp[] = new byte[16];
+	private int[] shiftRows(int[] state, boolean inverse) {
+		int temp[] = new int[16];
 
 		// copy shift values into temp array
 		temp[0] = state[0];
@@ -214,8 +226,7 @@ public class AES {
 		return state;
 	}
 
-
-	private byte[] mixColumns(byte[] state, boolean inverse) // Jeremiah
+	private int[] mixColumns(int[] state, boolean inverse)
 	{
 
 		//  each column is processed separately
@@ -265,16 +276,16 @@ public class AES {
 		temp[15] = (mul3[state[12]]^state[13]^state[14]^mul2[state[15]]);
 
 		for (int i = 0; i < 16; i++)
-			state[i] = (byte)temp[i];
+			state[i] = (int)temp[i];
 
 		return state;
 	}
 
 	// XOR each byte of round key and state table
-	private void addRoundKey(byte[] state, int roundKey[])
+	private void addRoundKey(int[] state, int roundKey[], int round)
 	{
 		for (int i = 0; i < state.length; i++)
-			state[i] ^= roundKey[i];
+			state[i] ^= roundKey[16*round+i];
 	}
 
 	//  takes 128-bit (16-byte) key and expands into array
@@ -309,18 +320,19 @@ public class AES {
 			if (i % 4 == 0)		// xor each byte of word
 			{
 				temp = RotWord(temp);
-				System.out.print("	After RotWord  ");
-				printB(temp);
+				// System.out.print("	After RotWord  ");
+				// printByte(temp);
 
 				SubWord(temp);
 
-				System.out.print("	After Subword  ");
-				printB(temp);
+				// System.out.print("	After Subword  ");
+				// printByte(temp);
 
 				temp[0] = temp[0] ^ Rcon[i/Nk];
 
-				System.out.print("	After XOR with Rcon ");
-				printB(temp);
+				// System.out.print("	After XOR with Rcon ");
+				// printByte(temp);
+
 			}
 			else if (Nk > 6 && i % Nk == 4)
 				temp = SubWord(temp);
@@ -329,8 +341,8 @@ public class AES {
 			for (int j = 0; j < 4; j++)
 				exKey[i][j] = exKey[i-Nk][j] ^ temp[j];
 
-			printB(exKey[i]);
-			System.out.println();
+			// printByte(exKey[i]);
+			// System.out.println();
 
 			i++;
 		}
@@ -338,15 +350,13 @@ public class AES {
 	}
 
 	// for debugging
-	static void printB(int word[])
+	static void printByte(int word[])
 	{
 		System.out.print(Integer.toHexString(word[0]));
 		System.out.print(Integer.toHexString(word[1]));
 		System.out.print(Integer.toHexString(word[2]));
 		System.out.print(Integer.toHexString(word[3]) + "	");
 	}
-
-
 
 	// takes a four-byte input word and applies the S-box
 	// to each of the four bytes to produce an output word.
@@ -386,4 +396,53 @@ public class AES {
 		return newArr;
 	}
 
+
+	public String getBinary(int[] byt)
+	{
+		String bin = "";
+		for (int i = 0; i < byt.length; i++)
+			 bin += String.format("%8s", Integer.toBinaryString(byt[i])).replace(' ', '0');
+		// System.out.println(bin);
+		return bin;
+	}
+
+	static void printHex(int[] state)
+	{
+			  for (int j = 0; j < state.length; j++) {
+			 	 System.out.print(Integer.toHexString(state[j]));
+			  }
+			 System.out.println();
+	}
+
+
+	public int[] readBinary(String plaintext)
+	{
+		int Bit = 0;
+		int[] state = new int[16];
+		for (int j = 0; j < 16; j++)
+		{
+			state[j] = 0;
+			for (int i = 0; i < 8; i++)
+			{
+				if (i % 8 == 0)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 7);
+				if (i % 8 == 1)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 6);
+				if (i % 8 == 2)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 5);
+				if (i % 8 == 3)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 4);
+				if (i % 8 == 4)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 3);
+				if (i % 8 == 5)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 2);
+				if (i % 8 == 6)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 1);
+				if (i % 8 == 7)
+					Bit = Character.getNumericValue(plaintext.charAt(j*8+i))*(int)Math.pow(2, 0);
+				state[j] += Bit;
+			}
+		}
+		return state;
+	}
 }
