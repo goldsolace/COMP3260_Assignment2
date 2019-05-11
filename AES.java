@@ -66,7 +66,6 @@ public class AES {
 
 			if (version != 4)
 				addRoundKey(state, roundKey, i+1);
-				System.out.println("add round key");
 		}
 
 		// 4. Final Round
@@ -83,7 +82,6 @@ public class AES {
 
 		// return encrypted data (ciphertext)
 		cryptoTriplet.setCiphertext(ciphertext);
-		System.out.print("Output: ");
 	}
 
 	/**
