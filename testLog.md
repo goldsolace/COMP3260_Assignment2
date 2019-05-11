@@ -1,5 +1,9 @@
 # Test Log
 
+## Tips
+When testing, the methods printBinary and printHex should be used to see the
+contents of the state or the roundkey
+
 ## 10 round encryption (without avalanche)
 ### The following 10 round encryption was successfuly verified via the link below
 https://nvlpubs.nist.gov/nistpubs/fips/nist.fips.197.pdf

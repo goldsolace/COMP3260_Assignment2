@@ -1,43 +1,28 @@
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.lang.Math;
-import java.util.Scanner;
-
-
 /**
  * Class Description
  * 
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 11-05-2019
+ * @since 12-05-2019
  */
 
-// TODO: Read this v
-// all core AES methods are working as tested on byte/hex values
-// the readBinary method was designed to be used to read a binary string in
-// the format of the relevant bytewise values
-// NOTE: testing so far has been done on an external file as I have not yet
-// got myself familiar with using Application.java
-//
-// If you encounter any problems testing with the "byte" values then change them
-// all to integer values as that was what used when successfully testing each
-// method
-// TODO: test from Application
-// TODO: verify results after a full encryption
+// TODO: verify encryption results with avalanche effect implemented (verified without)
 // TODO: inverse methods and decryption (methods designed to handle inverse
-// operations when passed the inverse boolean as true)
+// operations when passed the boolean 'inverse' as true)
 
 public class AES {
 	static Data data = new Data();
 
 	public AES() {
 	}
-	// Input: 128 bit plaintext block and 128 bit key
-	// Output: 128 bit cipertext block
-	public void encrypt(CryptoTriplet cryptoTriplet, int version) // Jeremiah
+
+	/**
+	 * Encrypt plaintext.
+	 *
+	 * @param cryptoTriplet object holding plaintext and key
+	 * @param version specifies which version of AES to run
+	 */
+	public void encrypt(CryptoTriplet cryptoTriplet, int version)
 	{
 		// Pre-processing
 
@@ -50,82 +35,55 @@ public class AES {
 
 		// 1. Key Expansion:
 		// Derive the set of round keys from the cipher key.
-		// int[] roundKey = new int[16];
-		
-		// used this for testing expandKey
-		//String key = "2b 7e 15 16 28 ae d2 a6 ab f7 15 88 09 cf 4f 3c";
-
-		// read in 16 byte key, cast to int
 		byte[] byteKey = cryptoTriplet.getKey();
 		int[] intKey = new int[byteKey.length];
 		for (int i = 0; i < byteKey.length; i++)
 			intKey[i] = Byte.toUnsignedInt(byteKey[i]);
-
 		// Create round key...
 		int[] roundKey = convertArray(expandKey(intKey));
-		int[][] rrkey = expandKey(intKey);
 
 		// 2. Initial Round:
 		// Add the initial round key to the starting state array.
-		System.out.print("input: ");
-		printHex(state);
 		addRoundKey(state, roundKey, 0);
-		// System.out.print("k_sch: ");
-		// printHex(roundKey);
-		System.out.print("start: ");
-		printHex(state);
 
 		// 3. Rounds:
 		//ROUND 1-9: Perform nine rounds of state manipulation.
 		for (int i = 0; i < 9; i++)
-		// for (int i = 0; i < 2; i++)
 		{
-			// if (version != 1)
+			if (version != 1)
 				state = substituteBytes(state, false);
-		System.out.print("s_box: ");
-		printHex(state);
 
-			// if (version != 2)
+			if (version != 2)
 				state = shiftRows(state, false);
 				
-		System.out.print("s_rows: ");
-		printHex(state);
-			// if (version != 3)
+			if (version != 3)
 				state = mixColumns(state, false);
 
-		System.out.print("m_col: ");
-		printHex(state);
-			// if (version != 4)
+			if (version != 4)
 				addRoundKey(state, roundKey, i+1);
-				System.out.println("add round key");
-
-		System.out.print("start: ");
-		printHex(state);
 		}
 
 		// 4. Final Round
 		//ROUND 10 - Perform the tenth and final round of state manipulation.
-		// if (version != 1)
+		if (version != 1)
 			state = substituteBytes(state, false);
-		// if (version != 2)
+		if (version != 2)
 			state = shiftRows(state, false);
-		// if (version != 4)
+		if (version != 4)
 			addRoundKey(state, roundKey, 10);
 
 		// Copy the final state array out as the encrypted data (ciphertext).
 		String ciphertext = getBinary(state);
-
 		// return encrypted data (ciphertext)
 		//cryptoTriplet.setCiphertext(ciphertext);
-		System.out.print("Output: ");
-		printHex(state);
-		// after first run state = caa85332c6d94b35755fd8b2eb1483 (hex)
-
-		int segFault = state[666];
 	}
 
-	// Input: 128 bit cipertext block and 128 bit key
-	// Output: 128 bit plaintext
+	/**
+	 * Decrypt ciphertext.
+	 *
+	 * @param cryptoTriplet object holding ciphertext and key
+	 * @param version specifies which version of AES to run
+	 */
 	public byte[] decrypt(CryptoTriplet cryptoTriplet, int version)
 	{
 		//byte[] state = cryptoTriplet.getCiphertext();
@@ -170,7 +128,13 @@ public class AES {
 		return cryptoTriplet.getPlaintext();
 	}
 
-	// a simple substitution of each byte
+	/**
+	 * Substitute bytes.
+	 *
+	 * @param state current state of plaintext/ciphertext during
+	 * encryption/decryption
+	 * @param inverse specifies whether or not to run inverse method
+	 */
 	private int[] substituteBytes(int[] state, boolean inverse)
 	{
 		char[] sbox = data.getSbox();
@@ -195,6 +159,13 @@ public class AES {
 
 	}
 
+	/**
+	 * Shift rows.
+	 *
+	 * @param state current state of plaintext/ciphertext during
+	 * encryption/decryption
+	 * @param inverse specifies whether or not to run inverse method
+	 */
 	private int[] shiftRows(int[] state, boolean inverse) {
 		int temp[] = new int[16];
 
@@ -226,6 +197,13 @@ public class AES {
 		return state;
 	}
 
+	/**
+	 * Mix columns.
+	 *
+	 * @param state current state of plaintext/ciphertext during
+	 * encryption/decryption
+	 * @param inverse specifies whether or not to run inverse method
+	 */
 	private int[] mixColumns(int[] state, boolean inverse)
 	{
 
@@ -281,16 +259,30 @@ public class AES {
 		return state;
 	}
 
-	// XOR each byte of round key and state table
+	/**
+	 * Add round key.
+	 * XOR each byte of round key and state table
+	 *
+	 * @param state current state of plaintext/ciphertext during
+	 * encryption/decryption
+	 * @param roundKey expanded key
+	 * @param round current round number of encryption/decryption
+	 */
 	private void addRoundKey(int[] state, int roundKey[], int round)
 	{
 		for (int i = 0; i < state.length; i++)
 			state[i] ^= roundKey[16*round+i];
 	}
 
-	//  takes 128-bit (16-byte) key and expands into array
-	// of 44 32-bit words
-	private int[][] expandKey(int key[])//, int exKey[], int Nk, int Nb, int Nr)//(byte key[4*Nk], word exKey[Nb*(nr+1)], Nk)
+	/**
+	 * Expand key into set of round keys.
+	 *  takes 128-bit (16-byte) key and expands into array
+	 * of 44 32-bit words
+	 *
+	 * @param key set of bytes containing original key
+	 * @return double array of expanded key
+	 */
+	private int[][] expandKey(int key[])
 	{
 
 		int[] Rcon = {0, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54};
@@ -349,7 +341,12 @@ public class AES {
 		return exKey;
 	}
 
-	// for debugging
+	/**
+	 * Print a byte.
+	 * Print contents of a word in hexadecimal 2 bits at a time
+	 *
+	 * @param word 
+	 */
 	static void printByte(int word[])
 	{
 		System.out.print(Integer.toHexString(word[0]));
@@ -358,8 +355,14 @@ public class AES {
 		System.out.print(Integer.toHexString(word[3]) + "	");
 	}
 
-	// takes a four-byte input word and applies the S-box
-	// to each of the four bytes to produce an output word.
+	/**
+	 * Sub a word with the sbox.
+	 * takes a four-byte input word and applies the S-box
+	 * to each of the four bytes to produce an output word.
+	 *
+	 * @param word 
+	 * @return sbox substituted word
+	 */
 	private int[] SubWord(int word[])
 	{
 		Data data = new Data();
@@ -372,14 +375,25 @@ public class AES {
 		return word;
 	}
 
-	// takes a word [a0,a1,a2,a3] as input, performs a cyclic 
-	// permutation, and returns the word [a1,a2,a3,a0].
+	/**
+	 * Rotate word.
+	 * takes a word [a0,a1,a2,a3] as input, performs a cyclic 
+	 * permutation, and returns the word [a1,a2,a3,a0].
+	 * @param word 
+	 * @return rotated word
+	 */
 	private int[] RotWord(int word[])
 	{
 		int[] temp = {word[1], word[2], word[3], word[0]};
 		return temp;
 	}
 
+	/**
+	 * Convert 2D array to 1D array.
+	 *
+	 * @param arr 2D array 
+	 * @return 1D array
+	 */
 	public int[] convertArray(int[][] arr)
 	{
 		int m = arr.length;
@@ -397,6 +411,12 @@ public class AES {
 	}
 
 
+	/**
+	 * Get binary representation of a byte.
+	 *
+	 * @param byt
+	 * @return binary String representation of byte
+	 */
 	public String getBinary(int[] byt)
 	{
 		String bin = "";
@@ -406,6 +426,12 @@ public class AES {
 		return bin;
 	}
 
+	/**
+	 * Print hexadecimal representation of state.
+	 *
+	 * @param state 
+	 * @return Hexadecimal String representation of state
+	 */
 	static void printHex(int[] state)
 	{
 			  for (int j = 0; j < state.length; j++) {
@@ -415,6 +441,12 @@ public class AES {
 	}
 
 
+	/**
+	 * Read binary String in byte sized values.
+	 *
+	 * @param plaintext 
+	 * @return state array
+	 */
 	public int[] readBinary(String plaintext)
 	{
 		int Bit = 0;
