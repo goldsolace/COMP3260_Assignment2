@@ -13,7 +13,6 @@ import java.util.List;
 
 public class Application
 {
-
     public static final int NUM_VERSIONS = 5;
     public static final int NUM_ROUNDS = 10;
     public static final int KEY_SIZE = 128;
@@ -162,11 +161,13 @@ public class Application
             CryptoTriplet PUnderKi = list.get(1);
             for (int i = 0; i < NUM_VERSIONS; i++)
             {
+
                 pAndPiUnderKAverages[0][i] = Utility.bitDifference(original.getPlaintext(), PiUnderK.getPlaintext());
                 pUnderKAndKiAverages[0][i] = Utility.bitDifference(original.getPlaintext(), PUnderKi.getPlaintext());
             }
             for (int i = 0; i < NUM_ROUNDS; i++)
             {
+                //System.out.println(Utility.byteArrToBinaryString(PiUnderK.getIntermediateResults()[0][i]));
                 for (int j = 0; j < NUM_VERSIONS; j++)
                 {
                     pAndPiUnderKAverages[i + 1][j] += Utility.bitDifference(original.getPlaintext(), PiUnderK.getIntermediateResults()[j][i]);
@@ -287,6 +288,8 @@ public class Application
             while ((line = reader.readLine()) != null)
             {
                 if (line.isEmpty()) continue;
+                line = line.trim();
+                if (line.length() > 128 || line.matches("[^01]")) throw new Exception("File must contain 128 bit binary strings only");
                 switch (counter++)
                 {
                     case 0:
