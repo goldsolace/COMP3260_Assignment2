@@ -6,7 +6,6 @@
  * @since 12-05-2019
  */
 
-// TODO: verify encryption results with avalanche effect implemented (verified without)
 // TODO: inverse methods and decryption (methods designed to handle inverse
 // operations when passed the inverse boolean as true)
 
@@ -165,28 +164,6 @@ public class AES
                 }
             }
         }
-        /*
-        // copy shift values into temp array
-        temp[0] = state[0];
-        temp[1] = state[5];
-        temp[2] = state[10];
-        temp[3] = state[15];
-
-        temp[4] = state[4];
-        temp[5] = state[9];
-        temp[6] = state[14];
-        temp[7] = state[3];
-
-        temp[8] = state[8];
-        temp[9] = state[13];
-        temp[10] = state[2];
-        temp[11] = state[7];
-
-        temp[12] = state[12];
-        temp[13] = state[1];
-        temp[14] = state[6];
-        temp[15] = state[11];*/
-
         return temp;
     }
 
@@ -275,23 +252,6 @@ public class AES
             }
         }
 
-        /*temp[0] = (mul2[state[0]] ^ mul3[state[1]] ^ state[2] ^ state[3]);
-        temp[1] = (state[0] ^ mul2[state[1]] ^ mul3[state[2]] ^ state[3]);
-        temp[2] = (state[0] ^ state[1] ^ mul2[state[2]] ^ mul3[state[3]]);
-        temp[3] = (mul3[state[0]] ^ state[1] ^ state[2] ^ mul2[state[3]]);
-        temp[4] = (mul2[state[4]] ^ mul3[state[5]] ^ state[6] ^ state[7]);
-        temp[5] = (state[4] ^ mul2[state[5]] ^ mul3[state[6]] ^ state[7]);
-        temp[6] = (state[4] ^ state[5] ^ mul2[state[6]] ^ mul3[state[7]]);
-        temp[7] = (mul3[state[4]] ^ state[5] ^ state[6] ^ mul2[state[7]]);
-        temp[8] = (mul2[state[8]] ^ mul3[state[9]] ^ state[10] ^ state[11]);
-        temp[9] = (state[8] ^ mul2[state[9]] ^ mul3[state[10]] ^ state[11]);
-        temp[10] = (state[8] ^ state[9] ^ mul2[state[10]] ^ mul3[state[11]]);
-        temp[11] = (mul3[state[8]] ^ state[9] ^ state[10] ^ mul2[state[11]]);
-        temp[12] = (mul2[state[12]] ^ mul3[state[13]] ^ state[14] ^ state[15]);
-        temp[13] = (state[12] ^ mul2[state[13]] ^ mul3[state[14]] ^ state[15]);
-        temp[14] = (state[12] ^ state[13] ^ mul2[state[14]] ^ mul3[state[15]]);
-        temp[15] = (mul3[state[12]] ^ state[13] ^ state[14] ^ mul2[state[15]]);*/
-
         for (int i = 0; i < 16; i++)
             state[i] = temp[i];
 
@@ -352,18 +312,10 @@ public class AES
             if (i % 4 == 0)        // xor each byte of word
             {
                 temp = RotWord(temp);
-                // System.out.print("	After RotWord  ");
-                // printByte(temp);
 
                 SubWord(temp);
 
-                // System.out.print("	After Subword  ");
-                // printByte(temp);
-
                 temp[0] = temp[0] ^ Rcon[i / Nk];
-
-                // System.out.print("	After XOR with Rcon ");
-                // printByte(temp);
 
             } else if (Nk > 6 && i % Nk == 4)
             {
@@ -373,9 +325,6 @@ public class AES
             //  in 3 of 4 cases just XOR these together
             for (int j = 0; j < 4; j++)
                 exKey[i][j] = exKey[i - Nk][j] ^ temp[j];
-
-            // printByte(exKey[i]);
-            // System.out.println();
 
             i++;
         }
