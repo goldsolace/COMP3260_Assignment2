@@ -76,49 +76,34 @@ public class AES
      * Decrypt ciphertext.
      *
      * @param cryptoTriplet object holding ciphertext and key
-     * @param version       specifies which version of AES to run
      */
-    public byte[] decrypt(CryptoTriplet cryptoTriplet, int version)
+    public void decrypt(CryptoTriplet cryptoTriplet)
     {
-//		String ciphertext = cryptoTriplet.getCiphertext();
-//		int[] state = readBinary(ciphertext);
-        int state[] = Utility.byteArrToIntArr(cryptoTriplet.getCiphertext());
+        int[] state = Utility.byteArrToIntArr(cryptoTriplet.getCiphertext());
 
-        // expand key
-//		String keystr = cryptoTriplet.getKey();
-//		int[] key = readBinary(keystr);
-        int[] key = Utility.byteArrToIntArr(cryptoTriplet.getKey());
-        int[] roundKey = new int[16];
-        expandKey(key); // TODO
+        // Expand key
+        int[] intKey = Utility.byteArrToIntArr(cryptoTriplet.getKey());
+        int[] roundKey = Utility.convertArray(expandKey(intKey));
+        Utility.reverseIntArray(roundKey);
 
-        //ROUND 1
-        if (version != 2)
-            // Inverse shift rows
-            state = shiftRows(state, true);
-        if (version != 1)
-            // Inverse sub bytes
-            state = substituteBytes(state, true);
-        if (version != 4)
-            // Add round key
-            addRoundKey(state, roundKey, 10);
-        if (version != 3)
-            // Inverse mix columns
-            state = mixColumns(state, true);
-        //ROUND 2-10
-        for (int i = 0; i < 9; i++)
+        // Add the initial round key to the starting state array.
+        addRoundKey(state, roundKey, 0);
+
+        //ROUND 1-9: Perform nine rounds of state manipulation.
+        for (int round = 0; round < 9; round++)
         {
-            if (version != 2)
-                // Inverse shift rows
-                state = shiftRows(state, true);
-            if (version != 1)
-                // Inverse sub bytes
-                state = substituteBytes(state, true);
-            if (version != 4)
-                // Add Round Key
-                addRoundKey(state, roundKey, 10 - i);
+            state = shiftRows(state, true);
+            state = substituteBytes(state, true);
+            addRoundKey(state, roundKey, round + 1);
+            state = mixColumns(state, true);
         }
 
-        return cryptoTriplet.getPlaintext();
+        //ROUND 10 - Perform the tenth and final round of state manipulation.
+        state = shiftRows(state, true);
+        state = substituteBytes(state, true);
+        addRoundKey(state, roundKey, 10);
+
+        cryptoTriplet.setPlaintext(Utility.intArrToByteArr(state));
     }
 
     /**
@@ -130,13 +115,11 @@ public class AES
      */
     private int[] substituteBytes(int[] state, boolean inverse)
     {
-        char[] sbox = data.getSbox();
         //  uses one table of 16x16 bytes containing a
         // permutation of all 256 8-bit values
         // use the inverted sbox if performing an inverse
         // substituteBytes operation
-        if (inverse)
-            sbox = data.getInvertedSbox();
+        char[] sbox = inverse ? data.getInvertedSbox() : data.getSbox();
         //  each byte of state is replaced by byte in row (left
         // 4-bits) & column (right 4-bits)
         //  eg. byte {95} is replaced by row 9 col 5 byte
@@ -163,6 +146,26 @@ public class AES
     {
         int[] temp = new int[16];
 
+        // -1 for right shift, 1 for left shift
+        int direction = inverse ? -1 : 1;
+
+        // For rows x columns (4x4 bytes)
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                int index = i * 4 + j;
+                // First row unchanged
+                if (j % 4 == 0)
+                    temp[index] = state[index];
+                else
+                {
+                    // Shift ith row by i bytes in direction
+                    temp[index] = state[Math.floorMod((index + j * direction * 4), 16)];
+                }
+            }
+        }
+        /*
         // copy shift values into temp array
         temp[0] = state[0];
         temp[1] = state[5];
@@ -182,7 +185,7 @@ public class AES
         temp[12] = state[12];
         temp[13] = state[1];
         temp[14] = state[6];
-        temp[15] = state[11];
+        temp[15] = state[11];*/
 
         return temp;
     }

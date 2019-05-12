@@ -143,7 +143,7 @@ public class Application
 
         } else
         {
-            aes.decrypt(cryptoTriplet, 0);
+            aes.decrypt(cryptoTriplet);
             GenerateDecryptionOutput(cryptoTriplet);
         }
 

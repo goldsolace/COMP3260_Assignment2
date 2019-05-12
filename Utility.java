@@ -174,4 +174,19 @@ public class Utility
         }
         System.out.println();
     }
+
+    /**
+     * Reverse the order of an int array.
+     *
+     * @param array to reverse
+     */
+    static void reverseIntArray(int[] array)
+    {
+        for(int i = 0; i < array.length / 2; i++)
+        {
+            int temp = array[i];
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = temp;
+        }
+    }
 }
