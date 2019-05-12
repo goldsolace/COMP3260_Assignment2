@@ -1,5 +1,5 @@
 /**
- * Class Description
+ * Implementation of 10 Round 128 bit AES Encryption for single 128 bit blocks.
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179

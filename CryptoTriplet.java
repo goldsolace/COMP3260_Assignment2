@@ -1,10 +1,10 @@
 /**
- * Cryptographic key, plaintext, ciphertext triplets
- * It also has the ability to store the AES version, round number and intermediate results
+ * Cryptographic key, plaintext, ciphertext triplets stored as byte arrays.
+ * It also has the ability to store the intermediate states for AES version and round number.
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 17-04-2019
+ * @since 12-05-2019
  */
 
 public class CryptoTriplet
@@ -32,10 +32,7 @@ public class CryptoTriplet
         return plaintext;
     }
 
-    public byte[] getCiphertext()
-    {
-        return ciphertext;
-    }
+    public byte[] getCiphertext() { return ciphertext; }
 
     public byte[] getCiphertext(int version)
     {

@@ -1,9 +1,9 @@
 /**
- * Utility methods
+ * Utility methods for data manipulation.
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 11-05-2019
+ * @since 12-05-2019
  */
 
 public class Utility

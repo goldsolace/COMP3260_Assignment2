@@ -1,10 +1,19 @@
 import javax.swing.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
- * Class Description
+ * Application demonstrating 10 round AES encryption and decryption of a single plaintext block.
+ * Take as input a 128 bit plaintext block and a 128 bit key and produce as output a 128 bit ciphertext
+ * block, or a 128 bit ciphertext block and a 128 bit key and produce as output a 128 bit plaintext block.
+ *
+ * Encryption explores the Avalanche effect of the original Advanced Encryption Standard denoted
+ * as AES0, as well as AES1, AES2, AES3 and AES4, where in each version an operation is missing in each round
+ * as follows:
+ *      0. AES0 - the original version of AES
+ *      1. AES1 – SubstituteBytes is missing from all rounds
+ *      2. AES2 – ShiftRows is missing from all rounds
+ *      3. AES3 – MixColumns is missing from all rounds
+ *      4. AES4 - AddRoundKey is missing from all rounds
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
@@ -20,8 +29,6 @@ public class Application
     private boolean isEncryption;
     private File file;
     private StringBuilder output;
-
-    public static List<byte[]> list = new ArrayList<>();
 
     /**
      * Constructs an Application object from params.
@@ -92,54 +99,52 @@ public class Application
      */
     public void run()
     {
-        CryptoTriplet cyptoTriplet = readFile();
-        if (cyptoTriplet == null) return;
+        CryptoTriplet cryptoTriplet = readFile();
+        if (cryptoTriplet == null) return;
         AES aes = new AES();
         if (isEncryption)
         {
-            List<List<CryptoTriplet>> results = new ArrayList<>();
+            CryptoTriplet[][] cryptoTriplets = new CryptoTriplet[KEY_SIZE][2];
 
             long startTime = System.currentTimeMillis();
 
             // Explore each version of AES (AES0-AES4) on the orginal cryptoTriplet
             for (int aesVersion = 0; aesVersion < 5; aesVersion++)
             {
-                aes.encrypt(cyptoTriplet, aesVersion);
+                aes.encrypt(cryptoTriplet, aesVersion);
             }
 
+            // Explore the changing of the ith bit from 0 to 128
             for (int i = 0; i < KEY_SIZE; i++)
             {
-                // Explore the changing of the ith bit
-                byte[] ithKey = Utility.flipBit(cyptoTriplet.getKey(), i);
-                byte[] ithPlaintext = Utility.flipBit(cyptoTriplet.getPlaintext(), i);
+                byte[] ithKey = Utility.flipBit(cryptoTriplet.getKey(), i);
+                byte[] ithPlaintext = Utility.flipBit(cryptoTriplet.getPlaintext(), i);
 
-                List<CryptoTriplet> cyptoTriplets = new ArrayList<>();
                 // a) P and Pi under K
-                cyptoTriplets.add(new CryptoTriplet(cyptoTriplet.getKey(), ithPlaintext, null));
+                cryptoTriplets[i][0] = new CryptoTriplet(cryptoTriplet.getKey(), ithPlaintext, null);
                 // b) P under K and Ki
-                cyptoTriplets.add(new CryptoTriplet(ithKey, cyptoTriplet.getPlaintext(), null));
+                cryptoTriplets[i][1] = new CryptoTriplet(ithKey, cryptoTriplet.getPlaintext(), null);
 
-                // Explore each version of AES (AES0-AES4) on each of the current cryptoTriplets
-                for (CryptoTriplet triplet : cyptoTriplets)
+                // Explore each version of AES (AES0-AES4) on current cryptoTriplet pair
+                for (CryptoTriplet triplet : cryptoTriplets[i])
                 {
                     for (int aesVersion = 0; aesVersion < NUM_VERSIONS; aesVersion++)
                     {
                         aes.encrypt(triplet, aesVersion);
                     }
                 }
-
-                // Store the results
-                results.add(cyptoTriplets);
             }
+
             long runningTime = System.currentTimeMillis() - startTime;
 
             // Perform Avalanche effect analysis
-            int[][][] analysis = AvalancheAnalysis(cyptoTriplet, results);
-            GenerateEncryptionOutput(cyptoTriplet, analysis, runningTime);
+            int[][][] analysis = AvalancheAnalysis(cryptoTriplet, cryptoTriplets);
+            GenerateEncryptionOutput(cryptoTriplet, analysis, runningTime);
+
         } else
         {
-            aes.decrypt(cyptoTriplet, 0);
-            GenerateDecryptionOutput(cyptoTriplet);
+            aes.decrypt(cryptoTriplet, 0);
+            GenerateDecryptionOutput(cryptoTriplet);
         }
 
         System.out.println(output.toString());
@@ -147,27 +152,28 @@ public class Application
     }
 
     /**
-     * Performs avalanche effect analysis on the results and computes the average
+     * Performs avalanche effect analysis on the results of encryption.
+     *
+     * @param original Cryptotriplet containing original plaintext, key and ciphertext
+     * @param results Array of 128 pairs containing PiUnderK and PUnderKi with the ith bit flipped in plaintext or key
+     * @return 3D Matrix[2][Round][version] containing averages
      */
-    private int[][][] AvalancheAnalysis(CryptoTriplet original, List<List<CryptoTriplet>> results)
+    private int[][][] AvalancheAnalysis(CryptoTriplet original, CryptoTriplet[][] results)
     {
         int[][] pAndPiUnderKAverages = new int[Application.NUM_ROUNDS + 1][Application.NUM_VERSIONS];
         int[][] pUnderKAndKiAverages = new int[Application.NUM_ROUNDS + 1][Application.NUM_VERSIONS];
-        for (byte[] b : list) {
-            System.out.println(Utility.byteArrToBinaryString(b) + " : " + Utility.bitDifference(original.getPlaintext(), b));
-        }
 
-        for (List<CryptoTriplet> list : results)
+        for (CryptoTriplet[] pair : results)
         {
-            CryptoTriplet PiUnderK = list.get(0);
-            CryptoTriplet PUnderKi = list.get(1);
-            // Round 0 (Before any Encryption
+            CryptoTriplet PiUnderK = pair[0];
+            CryptoTriplet PUnderKi = pair[1];
+            // Round 0 (Before any Encryption)
             for (int version = 0; version < NUM_VERSIONS; version++)
             {
                 pAndPiUnderKAverages[0][version] = Utility.bitDifference(original.getPlaintext(), PiUnderK.getPlaintext());
                 pUnderKAndKiAverages[0][version] = Utility.bitDifference(original.getPlaintext(), PUnderKi.getPlaintext());
             }
-            // Sum bitDifference of version/round intermediate state
+            // Sum bitDifference of [round][version] intermediate state
             for (int round = 0; round < NUM_ROUNDS; round++)
             {
                 for (int version = 0; version < NUM_VERSIONS; version++)
@@ -178,7 +184,7 @@ public class Application
             }
         }
 
-        // Average
+        // Calculate Average = Total bit difference of [round][version] / 128
         for (int round = 1; round < NUM_ROUNDS + 1; round++)
         {
             for (int version = 0; version < NUM_VERSIONS; version++)
@@ -195,7 +201,11 @@ public class Application
     }
 
     /**
-     * Appends the formatted result of decryption to output
+     * Appends the formatted result of encryption to output including avalanche analysis.
+     *
+     * @param original Cryptotriplet containing original plaintext, key and ciphertext
+     * @param analysis 3D Matrix[2][Round][version] containing avalanche analysis
+     * @param runningTime time to complete encryption of all plaintext/key pairs
      */
     private void GenerateEncryptionOutput(CryptoTriplet original, int[][][] analysis, long runningTime)
     {
@@ -225,17 +235,28 @@ public class Application
         GenerateAnalysisOutput(analysis[1]);
     }
 
+    /**
+     * Format analysis by rounds and version and add to output.
+     *
+     * @param analysis 2D Matrix[Round][Version]
+     */
     private void GenerateAnalysisOutput(int[][] analysis)
     {
         output.append(String.format("%-16s %-7s %-7s %-7s %-7s %-7s\n", "Round", "AES0", "AES1", "AES2", "AES3", "AES4"));
-        for (int i = 0; i <= NUM_ROUNDS; i++)
+        for (int round = 0; round <= NUM_ROUNDS; round++)
         {
-            output.append(String.format("%-16s  %-7s %-7s %-7s %-7s %-7s\n", i, analysis[i][0], analysis[i][1], analysis[i][2], analysis[i][3], analysis[i][4]));
+            output.append(String.format("   %-15s", round));
+            for (int avgDiff : analysis[round]) {
+                output.append(String.format(" %-7s", avgDiff));
+            }
+            output.append(System.lineSeparator());
         }
     }
 
     /**
-     * Appends the formatted result of decryption to output
+     * Appends the formatted result of decryption to output.
+     *
+     * @param result Cryptotriplet containing plaintext, key and ciphertext
      */
     private void GenerateDecryptionOutput(CryptoTriplet result)
     {
@@ -313,7 +334,7 @@ public class Application
     }
 
     /**
-     * Write a string into a a file based on the name of the given file.
+     * Write a output into a a file based on the name of the given file.
      */
     private void writeFile()
     {
