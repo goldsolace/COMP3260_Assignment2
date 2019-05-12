@@ -67,7 +67,7 @@ public class AES
 
         byte[] cipherText = Utility.intArrToByteArr(state);
         // Store intermediate state for current version and round
-        cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, 9);
+        cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round-1);
         // Store cipher text in CryptoTriplet
         cryptoTriplet.setCiphertext(cipherText, version);
     }
@@ -216,7 +216,7 @@ public class AES
             for (int j = start; j < start + 4; j++)
             {
                 // Which galois table to use
-                int galois = Math.floorMod((j % 4 - i % 4), 4);
+                int galois = Math.floorMod((j - i), 4);
                 if (!inverse)
                 {
                     // Which look up table for matrix mulitplication
