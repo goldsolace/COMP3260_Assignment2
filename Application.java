@@ -107,11 +107,15 @@ public class Application
             CryptoTriplet[][] cryptoTriplets = new CryptoTriplet[KEY_SIZE][2];
 
             long startTime = System.currentTimeMillis();
+            long runningTime = 0L;
 
             // Explore each version of AES (AES0-AES4) on the orginal cryptoTriplet
             for (int aesVersion = 0; aesVersion < 5; aesVersion++)
             {
                 aes.encrypt(cryptoTriplet, aesVersion);
+                // Running time = time to encrypt original plaintext under AES0
+                if (aesVersion == 0)
+                    runningTime = System.currentTimeMillis() - startTime;
             }
 
             // Explore the changing of the ith bit from 0 to 128
@@ -134,8 +138,6 @@ public class Application
                     }
                 }
             }
-
-            long runningTime = System.currentTimeMillis() - startTime;
 
             // Perform Avalanche effect analysis
             int[][][] analysis = AvalancheAnalysis(cryptoTriplet, cryptoTriplets);

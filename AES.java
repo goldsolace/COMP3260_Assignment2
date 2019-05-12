@@ -223,12 +223,59 @@ public class AES
         int[] mul2 = data.getMul2();
         int[] mul3 = data.getMul3();
         int[] mul9 = data.getMul9();
+        int[] mul11 = data.getMul11();
         int[] mul13 = data.getMul13();
         int[] mul14 = data.getMul14();
 
         int[] temp = new int[16];
 
-        temp[0] = (mul2[state[0]] ^ mul3[state[1]] ^ state[2] ^ state[3]);
+        // For each byte
+        for (int i = 0; i < 16; i++)
+        {
+            // Process in blocks of 4 bytes (starting at 0, 4, 8, 12)
+            int start = i / 4 * 4;
+            for (int j = start; j < start + 4; j++)
+            {
+                // Which galois table to use
+                int galois = Math.floorMod((j % 4 - i % 4), 4);
+                if (!inverse)
+                {
+                    // Which look up table for matrix mulitplication
+                    switch (galois)
+                    {
+                        case 0:
+                            // XOR for addition
+                            temp[i] ^= mul2[state[j]];
+                            break;
+                        case 1:
+                            temp[i] ^= mul3[state[j]];
+                            break;
+                        default:
+                            temp[i] ^= state[j];
+                            break;
+                    }
+                } else
+                {
+                    switch (galois)
+                    {
+                        case 0:
+                            temp[i] ^= mul14[state[j]];
+                            break;
+                        case 1:
+                            temp[i] ^= mul11[state[j]];
+                            break;
+                        case 2:
+                            temp[i] ^= mul13[state[j]];
+                            break;
+                        case 3:
+                            temp[i] ^= mul9[state[j]];
+                            break;
+                    }
+                }
+            }
+        }
+
+        /*temp[0] = (mul2[state[0]] ^ mul3[state[1]] ^ state[2] ^ state[3]);
         temp[1] = (state[0] ^ mul2[state[1]] ^ mul3[state[2]] ^ state[3]);
         temp[2] = (state[0] ^ state[1] ^ mul2[state[2]] ^ mul3[state[3]]);
         temp[3] = (mul3[state[0]] ^ state[1] ^ state[2] ^ mul2[state[3]]);
@@ -243,7 +290,7 @@ public class AES
         temp[12] = (mul2[state[12]] ^ mul3[state[13]] ^ state[14] ^ state[15]);
         temp[13] = (state[12] ^ mul2[state[13]] ^ mul3[state[14]] ^ state[15]);
         temp[14] = (state[12] ^ state[13] ^ mul2[state[14]] ^ mul3[state[15]]);
-        temp[15] = (mul3[state[12]] ^ state[13] ^ state[14] ^ mul2[state[15]]);
+        temp[15] = (mul3[state[12]] ^ state[13] ^ state[14] ^ mul2[state[15]]);*/
 
         for (int i = 0; i < 16; i++)
             state[i] = temp[i];
