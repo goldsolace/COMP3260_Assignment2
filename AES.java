@@ -31,14 +31,15 @@ public class AES
         int[] intKey = Utility.byteArrToIntArr(cryptoTriplet.getKey());
         int[] roundKey = Utility.convertArray(expandKey(intKey));
 
+        int round = 0;
+
         // 2. Initial Round:
         // Add the initial round key to the starting state array.
-        addRoundKey(state, roundKey, 0);
+        addRoundKey(state, roundKey, round);
 
         // 3. Rounds:
         //ROUND 1-9: Perform nine rounds of state manipulation.
-        for (int round = 0; round < 9; round++)
-        {
+        while (round++ < 9) {
             if (version != 1)
                 state = substituteBytes(state, false);
 
@@ -49,10 +50,10 @@ public class AES
                 state = mixColumns(state, false);
 
             if (version != 4)
-                addRoundKey(state, roundKey, round + 1);
+                addRoundKey(state, roundKey, round);
 
             // Store intermediate state for current version and round
-            cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round);
+            cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round-1);
         }
 
         // 4. Final Round
@@ -62,7 +63,7 @@ public class AES
         if (version != 2)
             state = shiftRows(state, false);
         if (version != 4)
-            addRoundKey(state, roundKey, 10);
+            addRoundKey(state, roundKey, round);
 
         byte[] cipherText = Utility.intArrToByteArr(state);
         // Store intermediate state for current version and round
@@ -83,24 +84,25 @@ public class AES
         // Expand key
         int[] intKey = Utility.byteArrToIntArr(cryptoTriplet.getKey());
         int[] roundKey = Utility.convertArray(expandKey(intKey));
-        Utility.reverseIntArray(roundKey);
+
+        int round = 10;
 
         // Add the initial round key to the starting state array.
-        addRoundKey(state, roundKey, 0);
+        addRoundKey(state, roundKey, round);
 
         //ROUND 1-9: Perform nine rounds of state manipulation.
-        for (int round = 0; round < 9; round++)
+        while (round-- > 1)
         {
             state = shiftRows(state, true);
             state = substituteBytes(state, true);
-            addRoundKey(state, roundKey, round + 1);
+            addRoundKey(state, roundKey, round);
             state = mixColumns(state, true);
         }
 
         //ROUND 10 - Perform the tenth and final round of state manipulation.
         state = shiftRows(state, true);
         state = substituteBytes(state, true);
-        addRoundKey(state, roundKey, 10);
+        addRoundKey(state, roundKey, round);
 
         cryptoTriplet.setPlaintext(Utility.intArrToByteArr(state));
     }
@@ -252,10 +254,7 @@ public class AES
             }
         }
 
-        for (int i = 0; i < 16; i++)
-            state[i] = temp[i];
-
-        return state;
+        return temp;
     }
 
     /**
