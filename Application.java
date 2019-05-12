@@ -178,8 +178,8 @@ public class Application
             {
                 for (int version = 0; version < NUM_VERSIONS; version++)
                 {
-                    pAndPiUnderKAverages[round + 1][version] += Utility.bitDifference(original.getPlaintext(), PiUnderK.getIntermediateState(version, round));
-                    pUnderKAndKiAverages[round + 1][version] += Utility.bitDifference(original.getPlaintext(), PUnderKi.getIntermediateState(version, round));
+                    pAndPiUnderKAverages[round + 1][version] += Utility.bitDifference(original.getIntermediateState(version, round), PiUnderK.getIntermediateState(version, round));
+                    pUnderKAndKiAverages[round + 1][version] += Utility.bitDifference(original.getIntermediateState(version, round), PUnderKi.getIntermediateState(version, round));
                 }
             }
         }
@@ -189,8 +189,8 @@ public class Application
         {
             for (int version = 0; version < NUM_VERSIONS; version++)
             {
-                pAndPiUnderKAverages[round][version] = pAndPiUnderKAverages[round][version] / KEY_SIZE;
-                pUnderKAndKiAverages[round][version] = pUnderKAndKiAverages[round][version] / KEY_SIZE;
+                pAndPiUnderKAverages[round][version] = Math.round((float)pAndPiUnderKAverages[round][version] / KEY_SIZE);
+                pUnderKAndKiAverages[round][version] = Math.round((float)pUnderKAndKiAverages[round][version] / KEY_SIZE);
             }
         }
 
