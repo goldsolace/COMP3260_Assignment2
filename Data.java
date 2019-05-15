@@ -149,47 +149,50 @@ public class Data
     };
 
     // getters
+    
+    // returns mul2 lookup table
     public int[] getMul2()
     {
         return mul2;
     }
 
-    //
-    //
+    // returns mul3 lookup table
     public int[] getMul3()
     {
         return mul3;
     }
 
-    //
+    // returns mul9 lookup table
     public int[] getMul9()
     {
         return mul9;
     }
 
-    //
+    // returns mul13 lookup table
     public int[] getMul13()
     {
         return mul13;
     }
 
-    //
+    // returns mul11 lookup table
     public int[] getMul11()
     {
         return mul11;
     }
 
-    //
+    // returns mul14 lookup table
     public int[] getMul14()
     {
         return mul14;
     }
 
+    // returns sbox table
     char[] getSbox()
     {
         return sbox;
     }
 
+    // returns inverted sboxes
     char[] getInvertedSbox()
     {
         return invertedSBox;

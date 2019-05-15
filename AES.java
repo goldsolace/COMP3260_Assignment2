@@ -181,7 +181,7 @@ public class AES
      */
     private int[] mixColumns(int[] state, boolean inverse)
     {
-        Data data = new Data();
+	// retrieve lookup tables
         int[] mul2 = data.getMul2();
         int[] mul3 = data.getMul3();
         int[] mul9 = data.getMul9();
@@ -195,6 +195,7 @@ public class AES
         for (int i = 0; i < 16; i++)
         {
             // Process in blocks of 4 bytes (starting at 0, 4, 8, 12)
+	    // e.g.
             // i = 1; j = 0 (0 - 1 mod 4 = 3 state[1]
             //        j = 1 (1 - 1 mod 4 = 0 mul2[state[1]]
             //        j = 2 (2 - 1 mod 4 = 1 mul3[state[1]]
@@ -271,9 +272,9 @@ public class AES
     private int[][] expandKey(int[] key)
     {
         int[] Rcon = {0, 1, 2, 4, 8, 16, 32, 64, 128, 27, 54};
-        int Nr = 10;
-        int Nk = 4;
-        int Nb = 4; // for 128 bit key
+        int Nr = 10; // number of rounds
+        int Nk = 4; // number of 32 bit words comprising the cipher key
+        int Nb = 4; // number of columns (32-bit words) comprising the state
         int[] temp; // temporary variable to store a word
         int i = 0;
         int[][] exKey = new int[44][4]; // expanded key
@@ -327,12 +328,11 @@ public class AES
      */
     private int[] SubWord(int[] word)
     {
-        Data data = new Data();
         char[] sbox = data.getSbox();
 
         for (int i = 0; i < word.length; i++)
         {
-            word[i] = sbox[word[i]];
+            word[i] = sbox[word[i]];	// replace word with word at corresponding index of S-Box
         }
         return word;
     }
