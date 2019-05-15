@@ -3,7 +3,7 @@
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 12-05-2019
+ * @since 15-05-2019
  */
 
 public class Utility
@@ -63,10 +63,8 @@ public class Utility
             // Pad leading zeros
             if (byteInt <= 127)
                 sb.append(String.format("%08d", binary));
-                // Pad trailing zeros
             else
                 sb.append(binary);
-            //sb.append(String.format("%-8d", binary).replace(" ", "0"));
         }
         return sb.toString();
     }
@@ -74,7 +72,7 @@ public class Utility
     /**
      * Convert an int array to a byte array.
      *
-     * @param intArr
+     * @param intArr array of ints
      * @return byte array
      */
     public static byte[] intArrToByteArr(int[] intArr)
@@ -144,34 +142,5 @@ public class Utility
             diff += Integer.bitCount(byte1 ^ byte2);
         }
         return diff;
-    }
-
-    /**
-     * Print a byte.
-     * Print contents of a word in hexadecimal 2 bits at a time
-     *
-     * @param word
-     */
-    static void printByte(int[] word)
-    {
-        System.out.print(Integer.toHexString(word[0]));
-        System.out.print(Integer.toHexString(word[1]));
-        System.out.print(Integer.toHexString(word[2]));
-        System.out.print(Integer.toHexString(word[3]) + "	");
-    }
-
-    /**
-     * Print hexadecimal representation of state.
-     *
-     * @param state
-     * @return Hexadecimal String representation of state
-     */
-    static void printHex(int[] state)
-    {
-        for (int j = 0; j < state.length; j++)
-        {
-            System.out.print(Integer.toHexString(state[j]));
-        }
-        System.out.println();
     }
 }

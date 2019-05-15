@@ -5,19 +5,19 @@ import java.io.*;
  * Application demonstrating 10 round AES encryption and decryption of a single plaintext block.
  * Take as input a 128 bit plaintext block and a 128 bit key and produce as output a 128 bit ciphertext
  * block, or a 128 bit ciphertext block and a 128 bit key and produce as output a 128 bit plaintext block.
- *
+ * <p>
  * Encryption explores the Avalanche effect of the original Advanced Encryption Standard denoted
  * as AES0, as well as AES1, AES2, AES3 and AES4, where in each version an operation is missing in each round
  * as follows:
- *      0. AES0 - the original version of AES
- *      1. AES1 – SubstituteBytes is missing from all rounds
- *      2. AES2 – ShiftRows is missing from all rounds
- *      3. AES3 – MixColumns is missing from all rounds
- *      4. AES4 - AddRoundKey is missing from all rounds
+ * 0. AES0 - the original version of AES
+ * 1. AES1 – SubstituteBytes is missing from all rounds
+ * 2. AES2 – ShiftRows is missing from all rounds
+ * 3. AES3 – MixColumns is missing from all rounds
+ * 4. AES4 - AddRoundKey is missing from all rounds
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 12-05-2019
+ * @since 15-05-2019
  */
 
 public class Application
@@ -68,7 +68,8 @@ public class Application
                     return;
                 }
                 file = new File(args[1]);
-            } else
+            }
+            else
             {
                 Object[] options = {"Encryption", "Decryption"};
                 isEncryption = JOptionPane.showOptionDialog(null, "Operation?", "Please choose an opteration",
@@ -80,15 +81,17 @@ public class Application
             }
 
             // Run the simulation on selected file
-            if (file != null)
+            if (file != null && file.exists())
             {
                 Application app = new Application(isEncryption, file);
                 app.run();
-            } else
+            }
+            else
             {
                 System.out.println("Error! Valid file not specified at command line or using file chooser GUI.");
             }
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             e.printStackTrace();
         }
@@ -99,11 +102,15 @@ public class Application
      */
     public void run()
     {
+        // Read paintext/key or ciphertext/key pair from file.
         CryptoTriplet cryptoTriplet = readFile();
         if (cryptoTriplet == null) return;
         AES aes = new AES();
+
+        // Encryption
         if (isEncryption)
         {
+            // Generate 2D matrix of cryptotriplets to contain 128 bit flips of plaintext and key
             CryptoTriplet[][] cryptoTriplets = new CryptoTriplet[KEY_SIZE][2];
 
             long startTime = System.currentTimeMillis();
@@ -118,15 +125,16 @@ public class Application
                     runningTime = System.currentTimeMillis() - startTime;
             }
 
-            // Explore the changing of the ith bit from 0 to 128
+            // Explore the changing of the ith bit from 0 to 127
             for (int i = 0; i < KEY_SIZE; i++)
             {
+                // Flip the ith bit of key and plaintext
                 byte[] ithKey = Utility.flipBit(cryptoTriplet.getKey(), i);
                 byte[] ithPlaintext = Utility.flipBit(cryptoTriplet.getPlaintext(), i);
 
-                // a) P and Pi under K
+                // Pi under K
                 cryptoTriplets[i][0] = new CryptoTriplet(cryptoTriplet.getKey(), ithPlaintext, null);
-                // b) P under K and Ki
+                // P under Ki
                 cryptoTriplets[i][1] = new CryptoTriplet(ithKey, cryptoTriplet.getPlaintext(), null);
 
                 // Explore each version of AES (AES0-AES4) on current cryptoTriplet pair
@@ -143,12 +151,15 @@ public class Application
             int[][][] analysis = AvalancheAnalysis(cryptoTriplet, cryptoTriplets);
             GenerateEncryptionOutput(cryptoTriplet, analysis, runningTime);
 
-        } else
+        }
+        // Decryption
+        else
         {
             aes.decrypt(cryptoTriplet);
             GenerateDecryptionOutput(cryptoTriplet);
         }
 
+        // Output to stand output and write to file
         System.out.println(output.toString());
         writeFile();
     }
@@ -157,7 +168,7 @@ public class Application
      * Performs avalanche effect analysis on the results of encryption.
      *
      * @param original Cryptotriplet containing original plaintext, key and ciphertext
-     * @param results Array of 128 pairs containing PiUnderK and PUnderKi with the ith bit flipped in plaintext or key
+     * @param results  Array of 128 pairs containing PiUnderK and PUnderKi with the ith bit flipped in plaintext or key
      * @return 3D Matrix[2][Round][version] containing averages
      */
     private int[][][] AvalancheAnalysis(CryptoTriplet original, CryptoTriplet[][] results)
@@ -191,8 +202,8 @@ public class Application
         {
             for (int version = 0; version < NUM_VERSIONS; version++)
             {
-                pAndPiUnderKAverages[round][version] = Math.round((float)pAndPiUnderKAverages[round][version] / KEY_SIZE);
-                pUnderKAndKiAverages[round][version] = Math.round((float)pUnderKAndKiAverages[round][version] / KEY_SIZE);
+                pAndPiUnderKAverages[round][version] = Math.round((float) pAndPiUnderKAverages[round][version] / KEY_SIZE);
+                pUnderKAndKiAverages[round][version] = Math.round((float) pUnderKAndKiAverages[round][version] / KEY_SIZE);
             }
         }
 
@@ -205,8 +216,8 @@ public class Application
     /**
      * Appends the formatted result of encryption to output including avalanche analysis.
      *
-     * @param original Cryptotriplet containing original plaintext, key and ciphertext
-     * @param analysis 3D Matrix[2][Round][version] containing avalanche analysis
+     * @param original    Cryptotriplet containing original plaintext, key and ciphertext
+     * @param analysis    3D Matrix[2][Round][version] containing avalanche analysis
      * @param runningTime time to complete encryption of all plaintext/key pairs
      */
     private void GenerateEncryptionOutput(CryptoTriplet original, int[][][] analysis, long runningTime)
@@ -248,7 +259,8 @@ public class Application
         for (int round = 0; round <= NUM_ROUNDS; round++)
         {
             output.append(String.format("   %-15s", round));
-            for (int avgDiff : analysis[round]) {
+            for (int avgDiff : analysis[round])
+            {
                 output.append(String.format(" %-7s", avgDiff));
             }
             output.append(System.lineSeparator());
@@ -298,7 +310,8 @@ public class Application
             {
                 if (line.isEmpty()) continue;
                 line = line.trim();
-                if (line.length() > 128 || line.matches("[^01]")) throw new Exception("File must contain 128 bit binary strings only");
+                if (line.length() > 128 || line.matches("[^01]"))
+                    throw new Exception("File must contain 128 bit binary strings only");
                 switch (counter++)
                 {
                     case 0:

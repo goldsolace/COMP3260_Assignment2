@@ -4,22 +4,23 @@ Java implementation of 10 round AES encryption and decryption exploring the [Ava
 on plaintexts that differ by 1 bit by altering the inclusion of certain operations in the rounds.
 
 ## Compilation
-javac Application.java
+"javac Application.java"
 
 ## Execution
-Call java Application to run the program. Command lines arguments are optional and if they are excluded then you will be prompted by a couple dialogs to choose mode and file
+"java Application" to run the program. Command lines arguments are optional and if they are excluded then you will be prompted by a couple dialogs to choose mode and  input file.
+No output file is required as an input. The output of execution will be printed to standard output and to a file named "input_filname_output.txt".
 
 ### Command Line Args
-<executable name> --encrypt <input filename> <output filename>
+--encrypt input_filename
 for encryption.
 
-<executable name> --decrypt <input filename> <output filename>
+--decrypt input_filename
 for decryption.
 
 ***Examples***
 
 "java Application --encrypt Example.txt"
-"java Application -decrypt C:/Users/Name/Documents/Example.dat"
+"java Application --decrypt C:/Users/Name/Documents/Example.dat"
 
 ## Sources
 * Federal Information Processing Standards Publication 197, Announcing the ADVANCED ENCRYPTION STANDARD (AES) 

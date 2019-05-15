@@ -3,11 +3,8 @@
  *
  * @author Brice Purton - c3180044
  * @author Jeremiah Smith - c3238179
- * @since 12-05-2019
+ * @since 15-05-2019
  */
-
-// TODO: inverse methods and decryption (methods designed to handle inverse
-// operations when passed the inverse boolean as true)
 
 public class AES
 {
@@ -39,7 +36,8 @@ public class AES
 
         // 3. Rounds:
         //ROUND 1-9: Perform nine rounds of state manipulation.
-        while (round++ < 9) {
+        while (round++ < 9)
+        {
             if (version != 1)
                 state = substituteBytes(state, false);
 
@@ -53,7 +51,7 @@ public class AES
                 addRoundKey(state, roundKey, round);
 
             // Store intermediate state for current version and round
-            cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round-1);
+            cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round - 1);
         }
 
         // 4. Final Round
@@ -67,7 +65,7 @@ public class AES
 
         byte[] cipherText = Utility.intArrToByteArr(state);
         // Store intermediate state for current version and round
-        cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round-1);
+        cryptoTriplet.setIntermediateState(Utility.intArrToByteArr(state), version, round - 1);
         // Store cipher text in CryptoTriplet
         cryptoTriplet.setCiphertext(cipherText, version);
     }
@@ -109,6 +107,8 @@ public class AES
 
     /**
      * Substitute bytes.
+     * Uses 16x16 table of bytes containing a permutation of all 256 8-bit values
+     * Use the inverted sbox if performing an inverse substituteBytes operation
      *
      * @param state   current state of plaintext/ciphertext during
      *                encryption/decryption
@@ -116,10 +116,6 @@ public class AES
      */
     private int[] substituteBytes(int[] state, boolean inverse)
     {
-        //  uses one table of 16x16 bytes containing a
-        // permutation of all 256 8-bit values
-        // use the inverted sbox if performing an inverse
-        // substituteBytes operation
         char[] sbox = inverse ? data.getInvertedSbox() : data.getSbox();
         //  each byte of state is replaced by byte in row (left
         // 4-bits) & column (right 4-bits)
@@ -172,32 +168,19 @@ public class AES
     /**
      * Mix columns.
      *
+     * Columns processed separately with each byte replaced by a value dependent
+     * on all 4 bytes in the column, effectively a matrix multiplication in
+     * GF(28) using irreducible polynomial m(x) =x^8+x^4+x^3+x+1.
+     * Express each col as 4 equations to derive each new byte in col.
+     * Decryption requires use of inverse matrix with larger coefficients, hence a little harder
+     * Each column a 4-term polynomial with coefficients in GF(2^8) and polynomials multiplied modulo (x^4+1)
+     *
      * @param state   current state of plaintext/ciphertext during
      *                encryption/decryption
      * @param inverse specifies whether or not to run inverse method
      */
     private int[] mixColumns(int[] state, boolean inverse)
     {
-        //  each column is processed separately
-        //
-        //  each byte is replaced by a value dependent
-        // on all 4 bytes in the column
-        //  effectively a matrix multiplication in
-        // GF(28) using irreducible polynomial
-        // m(x) =x^8+x^4+x^3+x+1
-
-        // (see graph)
-
-        //  can express each col as 4 equations
-        // 	 to derive each new byte in col
-        //  decryption requires use of inverse matrix
-        // 	 with larger coefficients, hence a little harder
-        //  have an alternate characterisation
-        // 	 each column a 4-term polynomial
-        // 	 with coefficients in GF(2^8)
-        // 	 and polynomials multiplied modulo (x^4+1)
-        //
-
         Data data = new Data();
         int[] mul2 = data.getMul2();
         int[] mul3 = data.getMul3();
@@ -212,15 +195,19 @@ public class AES
         for (int i = 0; i < 16; i++)
         {
             // Process in blocks of 4 bytes (starting at 0, 4, 8, 12)
-            int start = i / 4 * 4;
+            // i = 1; j = 0 (0 - 1 mod 4 = 3 state[1]
+            //        j = 1 (1 - 1 mod 4 = 0 mul2[state[1]]
+            //        j = 2 (2 - 1 mod 4 = 1 mul3[state[1]]
+            //        j = 3 (3 - 1 mod 4 = 2 state[1]
+            // temp[1] =  state[0] ^ mul2[state[1]] ^ mul3[state[2]] ^ state[3]
+            int start = i - i % 4;
             for (int j = start; j < start + 4; j++)
             {
-                // Which galois table to use
-                int galois = Math.floorMod((j - i), 4);
+                // Which multiplication table
+                int table = Math.floorMod((j - i), 4);
                 if (!inverse)
                 {
-                    // Which look up table for matrix mulitplication
-                    switch (galois)
+                    switch (table)
                     {
                         case 0:
                             // XOR for addition
@@ -233,9 +220,11 @@ public class AES
                             temp[i] ^= state[j];
                             break;
                     }
-                } else
+                }
+                //Inverse Mix Columns
+                else
                 {
-                    switch (galois)
+                    switch (table)
                     {
                         case 0:
                             temp[i] ^= mul14[state[j]];
@@ -253,7 +242,6 @@ public class AES
                 }
             }
         }
-
         return temp;
     }
 
@@ -274,7 +262,7 @@ public class AES
 
     /**
      * Expand key into set of round keys.
-     *  takes 128-bit (16-byte) key and expands into array
+     * Takes 128-bit (16-byte) key and expands into array
      * of 44 32-bit words
      *
      * @param key set of bytes containing original key
@@ -290,7 +278,7 @@ public class AES
         int i = 0;
         int[][] exKey = new int[44][4]; // expanded key
 
-        //  start by copying key into first 4 words (16 bytes)
+        // Start by copying key into first 4 words (16 bytes)
         while (i < Nk)
         {
             exKey[i][0] = key[4 * i];
@@ -301,8 +289,7 @@ public class AES
         }
         i = Nk;
 
-        //  then loop creating words that depend on values in
-        // previous & 4 places back
+        // Loop creating words that depend on values in previous & 4 places back
         while (i < Nb * (Nr + 1))
         {
             temp = exKey[i - 1];
